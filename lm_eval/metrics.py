@@ -6,6 +6,10 @@ import sacrebleu
 import sklearn.metrics
 import random
 
+from comet import download_model, load_from_checkpoint
+# load model
+model_path = download_model("Unbabel/wmt22-comet-da")
+model = load_from_checkpoint(model_path)
 
 def mean(arr):
     return sum(arr) / len(arr)
@@ -153,6 +157,20 @@ def ter(items):
     refs, preds = _sacreformat(refs, preds)
     return sacrebleu.corpus_ter(preds, refs).score
 
+def comet22(items):
+    """
+    init comet22 eval model
+    Higher is better
+    """
+    # load data
+    srcs = list(zip(*items))[0]
+    refs = list(zip(*items))[1]
+    preds = list(zip(*items))[2]
+
+    # data to comet format
+    data = [{"src": src, "mt": pred, "ref": ref} for src, ref, pred in zip(srcs, refs, preds)]
+    scores = model.predict(data, batch_size=16, gpus=1)
+    return scores["system_score"]
 
 def is_non_str_iterable(obj):
     return isinstance(obj, Iterable) and not isinstance(obj, str)
@@ -241,7 +259,7 @@ def stderr_for_metric(metric, bootstrap_iters):
         perplexity,
         bleu,
         chrf,
-        ter,
+        ter
     ]
 
     if metric in bootstrappable:

@@ -30,6 +30,12 @@ def simple_evaluate(
     decontamination_ngrams_path=None,
     write_out=False,
     output_base_path=None,
+    output_template=None,
+    rep_topics=False,
+    topic_keywords=False,
+    use_stops=False,
+    parallel_topics=False,
+    seed=1234
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -65,14 +71,19 @@ def simple_evaluate(
     :return
         Dictionary of results
     """
-    random.seed(1234)
-    np.random.seed(1234)
+    if seed:
+        random.seed(seed)
+        np.random.seed(seed)
+    else:
+        random.seed(1234)
+        np.random.seed(1234)
 
     assert tasks != [], "No tasks specified"
 
     if isinstance(model, str):
         if model_args is None:
             model_args = ""
+        print(model_args)
         lm = lm_eval.models.get_model(model).create_from_arg_string(
             model_args, {"batch_size": batch_size, "max_batch_size": max_batch_size, "device": device}
         )
@@ -112,6 +123,11 @@ def simple_evaluate(
         decontamination_ngrams_path=decontamination_ngrams_path,
         write_out=write_out,
         output_base_path=output_base_path,
+        output_template=output_template,
+        rep_topics=rep_topics,
+        topic_keywords=topic_keywords,
+        use_stops=use_stops,
+        parallel_topics=parallel_topics
     )
 
     # add info about the model and few shot config
@@ -151,6 +167,11 @@ def evaluate(
     decontamination_ngrams_path=None,
     write_out=False,
     output_base_path=None,
+    output_template=None,
+    rep_topics=False,
+    topic_keywords=False,
+    use_stops=False,
+    parallel_topics=False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -251,8 +272,12 @@ def evaluate(
                 )
 
             docs[(task_name, doc_id)] = doc
+
+            # prompt created
+            # TODO: add parameters as input for topic_keywords, rep_topics, no_topics
             ctx = task.fewshot_context(
-                doc=doc, num_fewshot=num_fewshot, rnd=rnd, description=description
+                doc=doc, num_fewshot=num_fewshot, rnd=rnd, description=description,
+                topic_keywords = topic_keywords, rep_topics = rep_topics, no_topics=1
             )
             reqs = task.construct_requests(doc, ctx)
 
@@ -260,7 +285,7 @@ def evaluate(
                 prompt_details.append({"doc_id": doc_id})
 
             # print the prompt for the first few documents
-            if doc_id < 1:
+            if doc_id < 3:
                 print(
                     f"Task: {task_name}; document {doc_id}; context prompt (starting on next line):\n{ctx}\n(end of prompt on previous line)"
                 )
@@ -329,8 +354,16 @@ def evaluate(
         requests.sort(key=lambda x: x[0])
         requests = [x[1] for x in requests]
 
+        # TODO: work out how to output results
+
         task = task_dict[task_name]
         doc = docs[(task_name, doc_id)]
+
+        # if output_text:
+        #     with open(f"{task_name}_{output_text}.txt", "w") as output:
+
+
+        # print(doc,requests)
 
         metrics = task.process_results(doc, requests)
         for metric, value in metrics.items():
@@ -356,7 +389,6 @@ def evaluate(
 
         # hotfix: bleu, chrf, ter seem to be really expensive to bootstrap
         # so we run them less iterations. still looking for a cleaner way to do this
-
         stderr = lm_eval.metrics.stderr_for_metric(
             metric=task.aggregation()[real_metric],
             bootstrap_iters=min(bootstrap_iters, 1000)
@@ -383,11 +415,18 @@ def evaluate(
 
         for task_name, _ in task_dict_items:
             with open(
-                output_base_path.joinpath(f"{task_name}_write_out_info.json"),
+                output_base_path.joinpath(f"{output_template}_outputs.json"),
                 "w",
                 encoding="utf8",
             ) as fp:
                 json.dump(write_out_info[task_name], fp, indent=4, ensure_ascii=False)
+        
+        with open(
+                output_base_path.joinpath(f"{output_template}_results.json"),
+                "w",
+                encoding="utf8",
+            ) as fp:
+                json.dump(results, fp, indent=4, ensure_ascii=False)
 
     return {"results": dict(results), "versions": dict(versions)}
 
@@ -411,15 +450,15 @@ def make_table(result_dict):
 
             if m + "_stderr" in dic:
                 se = dic[m + "_stderr"]
-                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+                values.append([k, version, m, "%.5f" % v, "±", "%.5f" % se])
             else:
-                values.append([k, version, m, "%.4f" % v, "", ""])
+                values.append([k, version, m, "%.5f" % v, "", ""])
             k = ""
             version = ""
     md_writer.value_matrix = values
     latex_writer.value_matrix = values
 
     # todo: make latex table look good
-    # print(latex_writer.dumps())
+    print(latex_writer.dumps())
 
     return md_writer.dumps()
