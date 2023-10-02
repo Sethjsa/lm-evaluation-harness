@@ -37,6 +37,14 @@ def parse_args():
     parser.add_argument("--use_stops", action="store_true")
     parser.add_argument("--parallel_topics", action="store_true")
     parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--bootstrap_iters", type=int, default=1000)
+    parser.add_argument("--trim_excess", action="store_true")
+    parser.add_argument("--domain_label", action="store_true")
+    parser.add_argument("--randoms", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
+
+    parser.add_argument("--topic_model", type=str, default=None)
+
 
 
 
@@ -57,6 +65,8 @@ def main():
         task_names = tasks.ALL_TASKS
     else:
         task_names = utils.pattern_match(args.tasks.split(","), tasks.ALL_TASKS)
+    
+    tasks.topic_model = args.topic_model
 
     print(f"Selected Tasks: {task_names}")
 
@@ -85,7 +95,13 @@ def main():
         topic_keywords=args.topic_keywords,
         use_stops=args.use_stops,
         parallel_topics=args.parallel_topics,
-        seed=args.seed
+        seed=args.seed,
+        bootstrap_iters=args.bootstrap_iters,
+        trim_excess=args.trim_excess,
+        topic_model=args.topic_model,
+        domain_label=args.domain_label,
+        randoms=args.randoms,
+        verbose=args.verbose
     )
 
     dumped = json.dumps(results, indent=2)

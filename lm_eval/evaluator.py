@@ -6,11 +6,12 @@ import lm_eval.metrics
 import lm_eval.models
 import lm_eval.tasks
 import lm_eval.base
-from lm_eval.utils import positional_deprecated, run_task_tests
+from lm_eval.utils import positional_deprecated, run_task_tests, remove_excess
 from lm_eval.models.gpt2 import HFLM
 
 import numpy as np
 import transformers
+
 
 
 @positional_deprecated
@@ -35,7 +36,12 @@ def simple_evaluate(
     topic_keywords=False,
     use_stops=False,
     parallel_topics=False,
-    seed=1234
+    seed=1234,
+    trim_excess=False,
+    topic_model=None,
+    domain_label=False,
+    randoms=False,
+    verbose=False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -108,6 +114,13 @@ def simple_evaluate(
             + ".db",
         )
 
+    # TODO: init topic model, pass path to translation task
+    if topic_model:
+        lm_eval.tasks.translation.TOPIC_MODEL = topic_model
+    
+    if verbose:
+        lm_eval.tasks.translation.verbose = verbose
+
     task_dict = lm_eval.tasks.get_task_dict(tasks)
 
     if check_integrity:
@@ -127,7 +140,11 @@ def simple_evaluate(
         rep_topics=rep_topics,
         topic_keywords=topic_keywords,
         use_stops=use_stops,
-        parallel_topics=parallel_topics
+        parallel_topics=parallel_topics,
+        trim_excess=trim_excess,
+        topic_model=topic_model,
+        domain_label=domain_label,
+        randoms=randoms
     )
 
     # add info about the model and few shot config
@@ -170,8 +187,12 @@ def evaluate(
     output_template=None,
     rep_topics=False,
     topic_keywords=False,
+    trim_excess=False,
     use_stops=False,
-    parallel_topics=False
+    parallel_topics=False,
+    topic_model=None,
+    domain_label=False,
+    randoms=False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -277,7 +298,8 @@ def evaluate(
             # TODO: add parameters as input for topic_keywords, rep_topics, no_topics
             ctx = task.fewshot_context(
                 doc=doc, num_fewshot=num_fewshot, rnd=rnd, description=description,
-                topic_keywords = topic_keywords, rep_topics = rep_topics, no_topics=1
+                topic_keywords = topic_keywords, rep_topics = rep_topics, no_topics=1, domain_label=domain_label,
+                randoms=randoms
             )
             reqs = task.construct_requests(doc, ctx)
 
@@ -300,9 +322,11 @@ def evaluate(
                 requests_origin[req.request_type].append((i, task_name, doc, doc_id))
 
                 if write_out:
-                    prompt_details[-1][f"prompt_{i}"] = "".join(
-                        (map(lambda x: "".join(x), req.args))
-                    )
+                    # prompt_details[-1][f"prompt_{i}"] = "".join(
+                    #     (map(lambda x: "".join(x), req.args))
+                    # )
+                    prompt_details[-1][f"prompt_{i}"] = req.args[0]
+                    
 
         if write_out:
             write_out_info[task_name] = prompt_details
@@ -345,7 +369,8 @@ def evaluate(
                         doc["answer"]
                     ]
                 else:
-                    write_out_info[task_name][doc_id]["truth"] = task.doc_to_target(doc)
+                    write_out_info[task_name][doc_id]["target"] = task.doc_to_target(doc)
+                    write_out_info[task_name][doc_id]["source"] = task.doc_to_decontamination_query(doc)
 
     vals = collections.defaultdict(list)
 
@@ -364,6 +389,9 @@ def evaluate(
 
 
         # print(doc,requests)
+        if trim_excess:
+            requests = [remove_excess(res) for res in requests]
+    
 
         metrics = task.process_results(doc, requests)
         for metric, value in metrics.items():

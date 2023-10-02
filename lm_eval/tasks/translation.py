@@ -13,6 +13,7 @@ import pycountry
 from pprint import pprint
 from sacrebleu import sacrebleu
 from lm_eval import metrics
+from lm_eval.utils import remove_excess
 from lm_eval.base import Task, rf
 from typing import List
 
@@ -20,7 +21,12 @@ from typing import List
 import os
 import itertools
 from lm_eval.topicmodel import TopicModel
+from bertopic import BERTopic
+import random
 os.environ["SACREBLEU"] = "/scratch/saycock/data/"
+
+TOPIC_MODEL = None
+verbose = False
 
 try:
     import nagisa
@@ -123,11 +129,13 @@ def create_translation_task(dataset, language_pair, version=0):
 class GeneralTranslationTask(Task):
     VERSION = 0
     DATA_DIR = "/scratch/saycock/data/"
+    TOPIC_DIR = "/scratch/saycock/topic/topicmodels/"
 
     # e.g. ("wmt14", "fr-en")
-    def __init__(self, dataset, language_pair=None):
+    def __init__(self, dataset, language_pair=None,):
         self.sacrebleu_dataset = dataset
         self.data_dir = self.DATA_DIR
+        self.topic_dir = self.TOPIC_DIR
         self.sacrebleu_language_pair = language_pair
         self.src_file = self.ref_file = self.src_data = self.ref_data = None
         self.language_codes = self.sacrebleu_language_pair.split("-")
@@ -142,35 +150,57 @@ class GeneralTranslationTask(Task):
         
         data_dir = self.data_dir
 
+        reverse_list = self.sacrebleu_language_pair.split("-")
+        reverse_pair = "-".join(reverse_list[::-1])
+
         if "wmt" in self.sacrebleu_dataset:
             self.src_file, self.ref_file = sacrebleu.download_test_set(
                 self.sacrebleu_dataset, self.sacrebleu_language_pair
             )
         else:
-            self.src_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_language_pair + "." + self.language_codes[0]
-            self.ref_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_language_pair + "." + self.language_codes[1]
+            try:
+                self.src_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + self.sacrebleu_language_pair + ".test." + self.language_codes[0]
+                self.ref_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + self.sacrebleu_language_pair + ".test." + self.language_codes[1]
 
-        self.src_data, self.ref_data = [
-            [line.rstrip() for line in sacrebleu.smart_open(file)]
-            for file in (self.src_file, self.ref_file)
-        ]
+                self.src_data, self.ref_data = [
+                    [line.rstrip() for line in sacrebleu.smart_open(file)]
+                    for file in (self.src_file, self.ref_file)
+                ]
+
+            except FileNotFoundError:
+                self.src_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + reverse_pair + ".test." + self.language_codes[0]
+                self.ref_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + reverse_pair + ".test." + self.language_codes[1]       
+
+                self.src_data, self.ref_data = [
+                    [line.rstrip() for line in sacrebleu.smart_open(file)]
+                    for file in (self.src_file, self.ref_file)
+                ]
 
         # init topic model per dataset
         # TODO: optionally make topic model for all data
         # TODO: add option for topic model to combine source and ref sentences for in-context examples
-        self.tm = TopicModel()
-        _tm = self.tm.generate_model(langs=self.language_codes,
-                                    nr_topics=100,
-                                    n_docs=10,
-                                    samples=1000,
-                                    src_data = self.src_data,
-                                    ref_data = self.ref_data,
-                                    use_stops=False,
-                                    parallel=True)
+        # self.tm = topic_model
+        # _tm = self.tm.generate_model(langs=self.language_codes,
+        #                             nr_topics=100,
+        #                             n_docs=3,
+        #                             samples=1000,
+        #                             src_data = self.src_data,
+        #                             ref_data = self.ref_data,
+        #                             use_stops=False,
+        #                             parallel=True)
+
+        if TOPIC_MODEL:
+            print(TOPIC_MODEL)
+            # # wrapper class init
+            self.tm = TopicModel()
+            # # load in pretrained models
+            self.tm.topic_model = BERTopic.load(self.topic_dir+TOPIC_MODEL)
+            self.tm.path = self.topic_dir+TOPIC_MODEL
 
     def has_training_docs(self):
         """Whether the task has a training set"""
         # TODO In the future we could be more discerning. Some more recent tests have train and dev sets
+        # TODO: Add training data functionality
         return False
 
     def has_validation_docs(self):
@@ -196,7 +226,13 @@ class GeneralTranslationTask(Task):
         tar_lang = code_to_language(language_codes[1])
 
         # EDITS
-        return f"{src_lang} phrase: " + doc["src"] + f"  {tar_lang} phrase:"
+        # Translate from {src_lang} to {tar_lang}.
+        # {src_lang}: " + doc["src"] + f" = {tar_lang}:
+        # Given the following source text in {src_lang}: \"{doc['src']}\", a good {tar_lang} translation is:
+        text = f"{src_lang}: " + doc["src"] + f" = {tar_lang}:"
+        if verbose:
+            text = f"Given the following source text in {src_lang}: \"{doc['src']}\", a good {tar_lang} translation is:"
+        return text
 
     def should_decontaminate(self):
         return True
@@ -232,6 +268,9 @@ class GeneralTranslationTask(Task):
 
         # These metrics are corpus-level not sentence level, so we'll hide the
         # results in this dict and compute the corpus score in the aggregate method
+        # remove_excess goes here
+        results = [res for res in results]
+
         ref_pred = (doc["ref"], results)
         src_ref_pred = (doc["src"], doc["ref"], results)
 
@@ -259,7 +298,7 @@ class GeneralTranslationTask(Task):
         """
         :returns: {str: bool}
             A dictionary where keys are the names of submetrics and values are
-            whether a higher value of the submetric is better
+            whether a higher value of the submetric is 
         """
         return {
             "bleu": True,
@@ -276,7 +315,8 @@ class GeneralTranslationTask(Task):
 
     def fewshot_context(
         self, doc, num_fewshot, provide_description=None, rnd=None, description=None,
-        topic_keywords = False, rep_topics = False, no_topics=1
+        topic_keywords = False, rep_topics = False, no_topics=1, domain_label = False,
+        randoms = False
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -312,6 +352,23 @@ class GeneralTranslationTask(Task):
         description = description + "\n\n" if description else ""
         fewshotex = ""
 
+        if domain_label:
+            domain = self.sacrebleu_dataset
+            domain_dict = {"EMEA": "EU biomedical texts",
+                            "TED2020": "Public speaking transcripts",
+                            "OpenSubtitles": "TV and movie subtitles",
+                            "Tanzil": "Religious Quran text",
+                            "QED": "Educational video transcripts",
+                            "JRC-Acquis": "EU legislative texts",
+                            "KDE4": "Software localization files",
+                            "CCAligned": "General web text"}
+            if randoms:
+                key_list = list(domain_dict.keys())
+                key_list.remove(domain)
+                domain = random.choice(key_list)
+            #  {domain}. Description: 
+            fewshotex += f"Domain: {domain_dict[domain]}.\n"
+
         if num_fewshot == 0:
             pass
         else:
@@ -323,12 +380,22 @@ class GeneralTranslationTask(Task):
                 no_topics = num_fewshot
                 topics, probs = self.tm.closest_topics(doc["src"], n)
                 if no_topics == 1:
-                    
-                    # TODO: add probability threshold - for sentence's topic probability, not word's prob of being in topic
-                    top_topic = self.tm.topics_test[0][0]
-                    keyword_text = ("This sentence's predicted topic includes keywords such as: " +
-                                ", ".join([keyword_tuple[0] for keyword_tuple in topics[0][top_topic] if keyword_tuple[1] > 0.05])  + ". "
-                    )
+                    if randoms:
+                        # topics_rand, probs_rand = self.tm.closest_topics(doc["src"], len(probs))
+                        rand_topic = random.choice(range(len(self.tm.topics_test[0])))
+                        print(len(self.tm.topics_test), len(self.tm.topics_test[0]), len(topics[0]), len(topics))
+                        # print(rand_topic)
+                        # rand_topic = self.tm.topics_test[0][rand_topic]
+                        keyword_text = ("Related keywords: " +
+                                    ", ".join([keyword_tuple[0] for keyword_tuple in self.tm.topic_model.get_topics()[rand_topic]])  + ".\n"
+                        )
+                    else:
+                        # TODO: add probability threshold - for sentence's topic probability, not word's prob of being in topic
+                        top_topic = self.tm.topics_test[0][0]
+                        keyword_text = ("Related keywords: " +
+                                    ", ".join([keyword_tuple[0] for keyword_tuple in topics[0][top_topic] ])  + ".\n"
+                        )
+                        # if keyword_tuple[1] > 0.05
                 else:
                     assert n >= len(topics), "Requested more examples than available topics, please increase no. of closest topics"
                     top_topics = self.tm.topics_test[0][:n].tolist()
@@ -344,9 +411,10 @@ class GeneralTranslationTask(Task):
                     #                 ", ".join([keyword_tuple[0] for keyword_tuple, p in zip(all_keywords, all_probs) if p > 0.05])  + ". "
                     #     )
                     
-                    keyword_text = (f"This sentence's best {n} predicted topics include keywords such as: " +
-                                    ", ".join([keyword for (keyword, p) in all_keywords if p > 0.05])  + ". "
+                    keyword_text = (f"Related keywords: " +
+                                    ", ".join([keyword for (keyword, p) in all_keywords])  + ".\n"
                         )
+                    # if p > 0.05
 
                 fewshotex += keyword_text
             
@@ -354,14 +422,50 @@ class GeneralTranslationTask(Task):
                 n = num_fewshot
                 no_topics = num_fewshot
                 topics, probs = self.tm.closest_topics(doc["src"], n)
+                rep = self.tm.representative_topics()[0][:num_fewshot]
                 # list of sentences that represent topic
-                rep = self.tm.representative_topics()[0]
-
-                rep_text = ("Representative sentences in the closest topic include: " +
-                            "\n".join([r for r in rep])
+                if randoms:
+                    rand_topic = random.choice(range(len(self.tm.rep_docs))) - 1
+                    # print(rand_topic)
+                    # print(self.tm.rep_docs)
+                    rep = self.tm.rep_docs[rand_topic][:num_fewshot]
+                    # full_random = 0
+                    # if full_random:
+                    #     pass
+                else:
+                    rep = self.tm.representative_topics()[0][:num_fewshot]
+                # Representative sentences in the closest topic include:
+                rep_text = (
+                            "\n".join([r for r in rep]) + "\n"
                 )
 
                 fewshotex += rep_text
+
+            if num_fewshot and self.tm and not rep_topics and not topic_keywords:
+                n = num_fewshot
+                topics, probs = self.tm.closest_topics(doc["src"], n)
+                # list of random parallel sentences
+                unrel_top = random.sample(range(0,len(topics)), n)
+                
+                # select top sentence from random topic, for num_fewshot examples
+                rep = [self.tm.representative_topics()[top][0] for top in unrel_top]
+                
+                rep_text = (
+                            "\n".join([r for r in rep]) + "\n"
+                )
+                
+                # no_topics = num_fewshot
+                # topics, probs = self.tm.closest_topics(doc["src"], n)
+                # # list of sentences that represent topic
+                # rep = self.tm.representative_topics()[0]
+                # # Representative sentences in the closest topic include:
+                # rep_text = (
+                #             "\n".join([r for r in rep])
+                # )
+
+                # fewshotex += rep_text
+
+
 
             # # for sets with no training docs, draw from other set *but ensure no overlap with current doc*
             # if self.has_training_docs():

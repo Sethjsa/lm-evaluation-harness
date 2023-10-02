@@ -1,0 +1,92 @@
+[
+    {
+        "doc_id": 0,
+        "prompt_0": "English phrase: A parenting seminar in Penang, Malaysia organized by Yayasan Guru Malaysia Bhd and Putrajaya Consultative Council of Parents and Teachers Association drew controversy after it issued guidelines for parents on how to detect symptoms of homosexuality.  French phrase:until",
+        "logit_0": "A French court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.  German phrase: A German court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.  Greek phrase: A Greek court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.  Hebrew phrase: A Hebrew court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.  Hindi phrase: A Hindi court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.  Hungarian phrase: A Hungarian court has ruled",
+        "truth": " Un séminaire parental à Penang, en Malaisie organisé par Yayasan Guru Bhd Malaisie et le Conseil consultatif Putrajaya de l'association des parents/enseignants a attiré la controverse après la publication d'un guide pour les parents sur la façon de détecter les symptômes de l'homosexualité.",
+        "bleu": "(\"Un séminaire parental à Penang, en Malaisie organisé par Yayasan Guru Bhd Malaisie et le Conseil consultatif Putrajaya de l'association des parents/enseignants a attiré la controverse après la publication d'un guide pour les parents sur la façon de détecter les symptômes de l'homosexualité.\", ['A French court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.'])",
+        "chrf": "(\"Un séminaire parental à Penang, en Malaisie organisé par Yayasan Guru Bhd Malaisie et le Conseil consultatif Putrajaya de l'association des parents/enseignants a attiré la controverse après la publication d'un guide pour les parents sur la façon de détecter les symptômes de l'homosexualité.\", ['A French court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.'])",
+        "comet": "('A parenting seminar in Penang, Malaysia organized by Yayasan Guru Malaysia Bhd and Putrajaya Consultative Council of Parents and Teachers Association drew controversy after it issued guidelines for parents on how to detect symptoms of homosexuality.', \"Un séminaire parental à Penang, en Malaisie organisé par Yayasan Guru Bhd Malaisie et le Conseil consultatif Putrajaya de l'association des parents/enseignants a attiré la controverse après la publication d'un guide pour les parents sur la façon de détecter les symptômes de l'homosexualité.\", ['A French court has ruled that a 14-year-old girl can be given a hormone treatment to delay puberty, in order to allow her to decide later whether she wants to become a man.'])"
+    },
+    {
+        "doc_id": 1,
+        "prompt_0": "English phrase: I brought up the topic of harassment with my colleagues — not necessarily divulging the fact that these calls were coming in — but seeking information on who would be behind these things.  French phrase:until",
+        "logit_0": "J'ai abordé le sujet de la harcèlement avec mes collègues — sans nécessairement divulguer le fait que ces appels étaient en provenance de — mais en cherchant des informations sur qui serait derrière ces choses.",
+        "truth": " J’ai abordé le sujet de harcèlement avec mes collègues – ne divulguant pas forcément l'existence de ces appels – mais recherchant des informations sur qui pouvait bien être derrière tout cela.",
+        "bleu": "(\"J’ai abordé le sujet de harcèlement avec mes collègues – ne divulguant pas forcément l'existence de ces appels – mais recherchant des informations sur qui pouvait bien être derrière tout cela.\", [\"J'ai abordé le sujet de la harcèlement avec mes collègues — sans nécessairement divulguer le fait que ces appels étaient en provenance de — mais en cherchant des informations sur qui serait derrière ces choses.\"])",
+        "chrf": "(\"J’ai abordé le sujet de harcèlement avec mes collègues – ne divulguant pas forcément l'existence de ces appels – mais recherchant des informations sur qui pouvait bien être derrière tout cela.\", [\"J'ai abordé le sujet de la harcèlement avec mes collègues — sans nécessairement divulguer le fait que ces appels étaient en provenance de — mais en cherchant des informations sur qui serait derrière ces choses.\"])",
+        "comet": "('I brought up the topic of harassment with my colleagues — not necessarily divulging the fact that these calls were coming in — but seeking information on who would be behind these things.', \"J’ai abordé le sujet de harcèlement avec mes collègues – ne divulguant pas forcément l'existence de ces appels – mais recherchant des informations sur qui pouvait bien être derrière tout cela.\", [\"J'ai abordé le sujet de la harcèlement avec mes collègues — sans nécessairement divulguer le fait que ces appels étaient en provenance de — mais en cherchant des informations sur qui serait derrière ces choses.\"])"
+    },
+    {
+        "doc_id": 2,
+        "prompt_0": "English phrase: Here is a video of street protests and gunshots near Saana University.  French phrase:until",
+        "logit_0": "Here is a video of street protests and gunshots near Saana University.",
+        "truth": " Voici une vidéo de manifestations de rue et de coups de feu près de l'université de Saana.",
+        "bleu": "(\"Voici une vidéo de manifestations de rue et de coups de feu près de l'université de Saana.\", ['Here is a video of street protests and gunshots near Saana University.'])",
+        "chrf": "(\"Voici une vidéo de manifestations de rue et de coups de feu près de l'université de Saana.\", ['Here is a video of street protests and gunshots near Saana University.'])",
+        "comet": "('Here is a video of street protests and gunshots near Saana University.', \"Voici une vidéo de manifestations de rue et de coups de feu près de l'université de Saana.\", ['Here is a video of street protests and gunshots near Saana University.'])"
+    },
+    {
+        "doc_id": 3,
+        "prompt_0": "English phrase: @SnaZiness: Respect out of love and respect out of fear are two very different things.  French phrase:until",
+        "logit_0": "@SnaZiness: Respect out of love and respect out of fear are two very different things.",
+        "truth": " @SnaZiness: Que cela produise du respect par peur ou par sympathie, cela fait une différence.",
+        "bleu": "('@SnaZiness: Que cela produise du respect par peur ou par sympathie, cela fait une différence.', ['@SnaZiness: Respect out of love and respect out of fear are two very different things.'])",
+        "chrf": "('@SnaZiness: Que cela produise du respect par peur ou par sympathie, cela fait une différence.', ['@SnaZiness: Respect out of love and respect out of fear are two very different things.'])",
+        "comet": "('@SnaZiness: Respect out of love and respect out of fear are two very different things.', '@SnaZiness: Que cela produise du respect par peur ou par sympathie, cela fait une différence.', ['@SnaZiness: Respect out of love and respect out of fear are two very different things.'])"
+    },
+    {
+        "doc_id": 4,
+        "prompt_0": "English phrase: He’s a retired engineer and he’s very interested in the Guaraní language, so he started writing a Guaraní dictionary based on the technical vocabulary engineers use.  French phrase:until",
+        "logit_0": "Il est un ingénieur retraité et il est très intéressé par la langue guarani, donc il a commencé à écrire un dictionnaire guarani basé sur le vocabulaire technique des ingénieurs.",
+        "truth": " Il est ingénieur à la retraite, et il s'intéresse beaucoup à la langue guarani ; alors, il a commencé à rédiger un dictionnaire guaraní des termes techniques utilisés par les ingénieurs.",
+        "bleu": "(\"Il est ingénieur à la retraite, et il s'intéresse beaucoup à la langue guarani ; alors, il a commencé à rédiger un dictionnaire guaraní des termes techniques utilisés par les ingénieurs.\", ['Il est un ingénieur retraité et il est très intéressé par la langue guarani, donc il a commencé à écrire un dictionnaire guarani basé sur le vocabulaire technique des ingénieurs.'])",
+        "chrf": "(\"Il est ingénieur à la retraite, et il s'intéresse beaucoup à la langue guarani ; alors, il a commencé à rédiger un dictionnaire guaraní des termes techniques utilisés par les ingénieurs.\", ['Il est un ingénieur retraité et il est très intéressé par la langue guarani, donc il a commencé à écrire un dictionnaire guarani basé sur le vocabulaire technique des ingénieurs.'])",
+        "comet": "('He’s a retired engineer and he’s very interested in the Guaraní language, so he started writing a Guaraní dictionary based on the technical vocabulary engineers use.', \"Il est ingénieur à la retraite, et il s'intéresse beaucoup à la langue guarani ; alors, il a commencé à rédiger un dictionnaire guaraní des termes techniques utilisés par les ingénieurs.\", ['Il est un ingénieur retraité et il est très intéressé par la langue guarani, donc il a commencé à écrire un dictionnaire guarani basé sur le vocabulaire technique des ingénieurs.'])"
+    },
+    {
+        "doc_id": 5,
+        "prompt_0": "English phrase: lakodo urges Hon Aromait not to leave her boyfriend, now that she has got more money and has a lot of opportunities to get a rich boyfriend:  French phrase:until",
+        "logit_0": "\"Lakodo, ne laisse pas ton copain, maintenant que tu as de l'argent et que tu as beaucoup d'opportunités de trouver un copain riche\"",
+        "truth": " lakodo exhorte le député Aromait de ne pas quitter son copain, maintenant qu'elle a gagne plus d'argent que lui et a plus de chance de se trouver un petit ami plus riche :",
+        "bleu": "(\"lakodo exhorte le député Aromait de ne pas quitter son copain, maintenant qu'elle a gagne plus d'argent que lui et a plus de chance de se trouver un petit ami plus riche :\", ['\"Lakodo, ne laisse pas ton copain, maintenant que tu as de l\\'argent et que tu as beaucoup d\\'opportunités de trouver un copain riche\"'])",
+        "chrf": "(\"lakodo exhorte le député Aromait de ne pas quitter son copain, maintenant qu'elle a gagne plus d'argent que lui et a plus de chance de se trouver un petit ami plus riche :\", ['\"Lakodo, ne laisse pas ton copain, maintenant que tu as de l\\'argent et que tu as beaucoup d\\'opportunités de trouver un copain riche\"'])",
+        "comet": "('lakodo urges Hon Aromait not to leave her boyfriend, now that she has got more money and has a lot of opportunities to get a rich boyfriend:', \"lakodo exhorte le député Aromait de ne pas quitter son copain, maintenant qu'elle a gagne plus d'argent que lui et a plus de chance de se trouver un petit ami plus riche :\", ['\"Lakodo, ne laisse pas ton copain, maintenant que tu as de l\\'argent et que tu as beaucoup d\\'opportunités de trouver un copain riche\"'])"
+    },
+    {
+        "doc_id": 6,
+        "prompt_0": "English phrase: Cardinal Jaime Ortega enlisted the help of the Cuban regime and used its security forces to evict the occupiers.  French phrase:until",
+        "logit_0": "Le cardinal Jaime Ortega a fait appel à l'aide du régime cubain et a utilisé ses forces de sécurité pour expulser les occupants.",
+        "truth": " Le Cardinal Jaime Ortega a demandé l'aide du régime cubain qui a utilisé ses forces de sécurité pour expulser les occupants.",
+        "bleu": "(\"Le Cardinal Jaime Ortega a demandé l'aide du régime cubain qui a utilisé ses forces de sécurité pour expulser les occupants.\", [\"Le cardinal Jaime Ortega a fait appel à l'aide du régime cubain et a utilisé ses forces de sécurité pour expulser les occupants.\"])",
+        "chrf": "(\"Le Cardinal Jaime Ortega a demandé l'aide du régime cubain qui a utilisé ses forces de sécurité pour expulser les occupants.\", [\"Le cardinal Jaime Ortega a fait appel à l'aide du régime cubain et a utilisé ses forces de sécurité pour expulser les occupants.\"])",
+        "comet": "('Cardinal Jaime Ortega enlisted the help of the Cuban regime and used its security forces to evict the occupiers.', \"Le Cardinal Jaime Ortega a demandé l'aide du régime cubain qui a utilisé ses forces de sécurité pour expulser les occupants.\", [\"Le cardinal Jaime Ortega a fait appel à l'aide du régime cubain et a utilisé ses forces de sécurité pour expulser les occupants.\"])"
+    },
+    {
+        "doc_id": 7,
+        "prompt_0": "English phrase: Unfortunately, our neighbor and his wife are illiterate and they never participated in any elections so far, although I've encouraged them a lot.  French phrase:until",
+        "logit_0": "Malheureusement, notre voisin et sa femme sont analphabètes et ils n'ont jamais participé à aucune élection jusqu'à présent, bien que j'aie encouragé beaucoup.",
+        "truth": " Hélas, notre voisin et sa femme sont illettrés et ils n'ont encore jamais participé aux élections, malgré tous mes encouragements.",
+        "bleu": "(\"Hélas, notre voisin et sa femme sont illettrés et ils n'ont encore jamais participé aux élections, malgré tous mes encouragements.\", [\"Malheureusement, notre voisin et sa femme sont analphabètes et ils n'ont jamais participé à aucune élection jusqu'à présent, bien que j'aie encouragé beaucoup.\"])",
+        "chrf": "(\"Hélas, notre voisin et sa femme sont illettrés et ils n'ont encore jamais participé aux élections, malgré tous mes encouragements.\", [\"Malheureusement, notre voisin et sa femme sont analphabètes et ils n'ont jamais participé à aucune élection jusqu'à présent, bien que j'aie encouragé beaucoup.\"])",
+        "comet": "(\"Unfortunately, our neighbor and his wife are illiterate and they never participated in any elections so far, although I've encouraged them a lot.\", \"Hélas, notre voisin et sa femme sont illettrés et ils n'ont encore jamais participé aux élections, malgré tous mes encouragements.\", [\"Malheureusement, notre voisin et sa femme sont analphabètes et ils n'ont jamais participé à aucune élection jusqu'à présent, bien que j'aie encouragé beaucoup.\"])"
+    },
+    {
+        "doc_id": 8,
+        "prompt_0": "English phrase: Here are a few snippets of their expressions.  French phrase:until",
+        "logit_0": "Here are a few snippets of their expressions.",
+        "truth": " Voici quelques uns de leurs vers.",
+        "bleu": "('Voici quelques uns de leurs vers.', ['Here are a few snippets of their expressions.'])",
+        "chrf": "('Voici quelques uns de leurs vers.', ['Here are a few snippets of their expressions.'])",
+        "comet": "('Here are a few snippets of their expressions.', 'Voici quelques uns de leurs vers.', ['Here are a few snippets of their expressions.'])"
+    },
+    {
+        "doc_id": 9,
+        "prompt_0": "English phrase: LMP, play fair. To better prepare for the elections of tomorrow, it's important to accept today's defeat and learn a lesson from it.  French phrase:until",
+        "logit_0": "LMP, jouez le jeu. Pour mieux préparer les élections de demain, il est important d'accepter la défaite d'aujourd'hui et d'en tirer une leçon.",
+        "truth": " LMP soyez fairplay; pour mieux préparer les élections de demain il faut accepter la défaite du jour et en tirer des leçons",
+        "bleu": "('LMP soyez fairplay; pour mieux préparer les élections de demain il faut accepter la défaite du jour et en tirer des leçons', [\"LMP, jouez le jeu. Pour mieux préparer les élections de demain, il est important d'accepter la défaite d'aujourd'hui et d'en tirer une leçon.\"])",
+        "chrf": "('LMP soyez fairplay; pour mieux préparer les élections de demain il faut accepter la défaite du jour et en tirer des leçons', [\"LMP, jouez le jeu. Pour mieux préparer les élections de demain, il est important d'accepter la défaite d'aujourd'hui et d'en tirer une leçon.\"])",
+        "comet": "(\"LMP, play fair. To better prepare for the elections of tomorrow, it's important to accept today's defeat and learn a lesson from it.\", 'LMP soyez fairplay; pour mieux préparer les élections de demain il faut accepter la défaite du jour et en tirer des leçons', [\"LMP, jouez le jeu. Pour mieux préparer les élections de demain, il est important d'accepter la défaite d'aujourd'hui et d'en tirer une leçon.\"])"
+    }
+]

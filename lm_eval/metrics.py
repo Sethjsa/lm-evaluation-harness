@@ -169,7 +169,7 @@ def comet22(items):
 
     # data to comet format
     data = [{"src": src, "mt": pred, "ref": ref} for src, ref, pred in zip(srcs, refs, preds)]
-    scores = model.predict(data, batch_size=16, gpus=1)
+    scores = model.predict(data, batch_size=4, gpus=1)
     return scores["system_score"]
 
 def is_non_str_iterable(obj):
@@ -187,11 +187,15 @@ def _sacreformat(refs, preds):
 
     # We expect refs to be List[str] or List[List[str]], the outer list corresponding to preds
     # Must become List[List[str]] with the inner list corresponding to preds
+    
+    # refs = [list(refs)]
+
     if not is_non_str_iterable(refs):
         refs = list(refs)
     if not is_non_str_iterable(refs[0]):
         refs = [[ref] for ref in refs]
     refs = list(zip(*refs))
+    
     # Note the number of refs in each ref list much match the number of preds
 
     # We expect preds to be List[str] or List[List[str]]. Must become List[str]

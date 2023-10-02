@@ -258,7 +258,7 @@ def find_test_root(start_path: pathlib.Path) -> pathlib.Path:
             return cur_path
         else:
             cur_path = cur_path.parent.resolve()
-    raise FileNotFoundError(
+    raise FileNotFoundError/(
         f"Unable to find package root within {max_layers} upwards" + f"of {start_path}"
     )
 
@@ -289,3 +289,20 @@ def run_task_tests(task_list: List[str]):
 def clear_torch_cache():
     gc.collect()
     torch.cuda.empty_cache()
+
+# TODO: make this better/optional
+def remove_excess(input_sent):
+    # if ":" in input_sent:
+    #     import re
+    #     regex = re.compile(r".+?:")
+    #     match = regex.match(input_sent)
+    #     return match.group()
+    input_list = input_sent.split()
+    if "=" in input_list:
+        index = input_list.index("=") - 1
+        throughput = input_list[:index]
+        output = " ".join(throughput)
+        return output
+    else:
+        return input_sent
+    

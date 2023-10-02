@@ -93,7 +93,28 @@ all_translation_benchmarks = {
 }
 
 # EDITS
-local_translation_benchmarks = {"EMEA":["en-fr"], "GlobalVoices":["en-fr"]}
+# add all pairs even if task doesn't exist yet
+pairs = ['cs-de', 'cs-en', 'cs-fi', 'cs-fr', 'cs-lt', 'cs-ro', 'cs-ta',
+         'de-cs', 'de-en', 'de-fi', 'de-fr', 'de-lt', 'de-ro', 'de-ta',
+         'en-cs', 'en-de', 'en-fi', 'en-fr', 'en-lt', 'en-ro', 'en-ta',
+         'fi-cs', 'fi-de', 'fi-en', 'fi-fr', 'fi-lt', 'fi-ro', 'fi-ta',
+         'fr-cs', 'fr-de', 'fr-en', 'fr-fi', 'fr-lt', 'fr-ro', 'fr-ta',
+         'lt-cs', 'lt-de', 'lt-en', 'lt-fi', 'lt-fr', 'lt-ro', 'lt-ta',
+         'ro-cs', 'ro-de', 'ro-en', 'ro-fi', 'ro-fr', 'ro-lt', 'ro-ta',
+         'ta-cs', 'ta-de', 'ta-en', 'ta-fi', 'ta-fr', 'ta-lt', 'ta-ro']
+
+local_translation_benchmarks = {"EMEA":pairs,
+                                "GlobalVoices":pairs,
+                                "OpenSubtitles":pairs,
+                                "TED2020":pairs,
+                                "Tanzil":pairs,
+                                "JRC-Acquis":pairs,
+                                "KDE4":pairs,
+                                "QED":pairs,
+                                "CCAligned":pairs
+                                }
+
+topic_model = None
 
 
 ########################################
@@ -429,3 +450,7 @@ def get_task_dict(task_name_list: List[Union[str, lm_eval.base.Task]]):
     }
     assert set(task_name_dict.keys()).isdisjoint(set(task_name_from_object_dict.keys()))
     return {**task_name_dict, **task_name_from_object_dict}
+
+def pass_topic_model(topic_model):
+    # dummy function to give topic_model to translation task
+    return topic_model

@@ -5,3 +5,9 @@ lm_cache
 .idea
 outputs/
 *.egg-info/
+results/all*
+results/en*
+results/lt*
+results/ro*
+results/fr*
+results/cs*
