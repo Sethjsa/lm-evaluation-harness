@@ -128,8 +128,8 @@ def remove_repeated_phrases(text):
     
 def main(args):
     # 
-    # lang_pairs = ["en-cs", "en-de", "en-fi", "en-fr", "en-lt", "en-ro", "en-ta"]
-    lang_pairs = ["cs-en", "fr-en", "lt-en", "ro-en"]
+    lang_pairs = ["en-cs", "en-de", "en-fi", "en-fr", "en-lt", "en-ro", "en-ta","cs-en", "fr-en", "lt-en", "ro-en"]
+    # lang_pairs = ["cs-en", "fr-en", "lt-en", "ro-en"]
     all_domains = ["EMEA","JRC-Acquis","KDE4","OpenSubtitles","QED","Tanzil","TED2020","CCAligned"]
     # lang_pairs = ["en-de"]
     # all_domains = ["EMEA"]

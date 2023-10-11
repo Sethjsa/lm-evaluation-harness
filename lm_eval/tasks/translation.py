@@ -16,6 +16,7 @@ from lm_eval import metrics
 from lm_eval.utils import remove_excess
 from lm_eval.base import Task, rf
 from typing import List
+import string
 
 # EDITS
 import os
@@ -139,6 +140,8 @@ class GeneralTranslationTask(Task):
         self.sacrebleu_language_pair = language_pair
         self.src_file = self.ref_file = self.src_data = self.ref_data = None
         self.language_codes = self.sacrebleu_language_pair.split("-")
+        self.train_src_file = self.train_trg_file = self.train_src_data = self.train_trg_data = None
+        self.train_x_file = self.train_en_file = self.train_x_data = self.train_en_data = None
 
         # EDITS
         self.tm = None
@@ -196,6 +199,59 @@ class GeneralTranslationTask(Task):
             # # load in pretrained models
             self.tm.topic_model = BERTopic.load(self.topic_dir+TOPIC_MODEL)
             self.tm.path = self.topic_dir+TOPIC_MODEL
+
+
+        domains = ["EMEA","JRC-Acquis","KDE4","OpenSubtitles","QED","Tanzil","TED2020","CCAligned"]
+        langs = ["en", "fr", "lt", "fi", "ta", "ro", "cs", "de"]
+
+        try:
+            self.train_src_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + self.sacrebleu_language_pair + ".train." + self.language_codes[0]
+            self.train_trg_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + self.sacrebleu_language_pair + ".train." + self.language_codes[1]
+
+            self.train_src_data, self.train_trg_data = [
+                [line.rstrip() for line in sacrebleu.smart_open(file)]
+                for file in (self.train_src_file, self.train_trg_file)
+            ]
+
+        except FileNotFoundError:
+            self.train_src_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + reverse_pair + ".train." + self.language_codes[0]
+            self.train_trg_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + "." + reverse_pair + ".train." + self.language_codes[1]       
+
+            self.train_src_data, self.train_trg_data = [
+                [line.rstrip() for line in sacrebleu.smart_open(file)]
+                for file in (self.train_src_file, self.train_trg_file)
+                ]
+        
+        # one domain, all langs
+        self.train_x_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + ".train.x"
+        self.train_en_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + ".train.en"
+
+        self.train_x_data, self.train_en_data = [
+            [line.rstrip() for line in sacrebleu.smart_open(file)]
+            for file in (self.train_x_file, self.train_en_file)
+        ]
+
+        # all domain, one lang pair
+        if self.language_codes[0] == "en":
+            self.alldom_x_file = data_dir + "all-" + self.language_codes[1] + ".train." + self.language_codes[1]
+            self.alldom_en_file = data_dir + "all-" + self.language_codes[1] + ".train.en"
+        if self.language_codes[1] == "en":
+            self.alldom_x_file = data_dir + "all-" + self.language_codes[0] + ".train." + self.language_codes[0]
+            self.alldom_en_file = data_dir + "all-" + self.language_codes[0] + ".train.en"
+        
+        self.alldom_train_x_data, self.alldom_train_en_data = [
+            [line.rstrip() for line in sacrebleu.smart_open(file)]
+            for file in (self.alldom_x_file, self.alldom_en_file)
+        ]
+
+        # all domains, all lang pairs (with en)
+        self.all_x_file = data_dir + "all-x.train.x"
+        self.all_en_file = data_dir + "all-en.train.en"
+
+        self.all_x_data, self.all_en_data = [
+            [line.rstrip() for line in sacrebleu.smart_open(file)]
+            for file in (self.all_x_file, self.all_en_file)
+        ]
 
     def has_training_docs(self):
         """Whether the task has a training set"""
@@ -316,7 +372,7 @@ class GeneralTranslationTask(Task):
     def fewshot_context(
         self, doc, num_fewshot, provide_description=None, rnd=None, description=None,
         topic_keywords = False, rep_topics = False, no_topics=1, domain_label = False,
-        randoms = False
+        randoms = False, domain_random = False, true_random = False, all_langs = False
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -378,81 +434,236 @@ class GeneralTranslationTask(Task):
                 # best matching topics and probs for given sentence
                 n = num_fewshot
                 no_topics = num_fewshot
-                topics, probs = self.tm.closest_topics(doc["src"], n)
-                if no_topics == 1:
-                    if randoms:
-                        # topics_rand, probs_rand = self.tm.closest_topics(doc["src"], len(probs))
-                        rand_topic = random.choice(range(len(self.tm.topics_test[0])))
-                        print(len(self.tm.topics_test), len(self.tm.topics_test[0]), len(topics[0]), len(topics))
-                        # print(rand_topic)
-                        # rand_topic = self.tm.topics_test[0][rand_topic]
-                        keyword_text = ("Related keywords: " +
-                                    ", ".join([keyword_tuple[0] for keyword_tuple in self.tm.topic_model.get_topics()[rand_topic]])  + ".\n"
-                        )
+                if self.tm:
+                    topics, probs = self.tm.closest_topics(doc["src"], n)
+                    if no_topics == 1:
+                        if randoms:
+                            # topics_rand, probs_rand = self.tm.closest_topics(doc["src"], len(probs))
+                            rand_topic = random.choice(range(len(self.tm.topics_test[0])))
+                            print(len(self.tm.topics_test), len(self.tm.topics_test[0]), len(topics[0]), len(topics))
+                            # print(rand_topic)
+                            # rand_topic = self.tm.topics_test[0][rand_topic]
+                            keyword_text = ("Related keywords: " +
+                                        ", ".join([keyword_tuple[0] for keyword_tuple in self.tm.topic_model.get_topics()[rand_topic]])  + ".\n"
+                            )
+                        else:
+                            # TODO: add probability threshold - for sentence's topic probability, not word's prob of being in topic
+                            top_topic = self.tm.topics_test[0][0]
+                            keyword_text = ("Related keywords: " +
+                                        ", ".join([keyword_tuple[0] for keyword_tuple in topics[0][top_topic] ])  + ".\n"
+                            )
+                            # if keyword_tuple[1] > 0.05
                     else:
-                        # TODO: add probability threshold - for sentence's topic probability, not word's prob of being in topic
+                        assert n >= len(topics), "Requested more examples than available topics, please increase no. of closest topics"
+                        top_topics = self.tm.topics_test[0][:n].tolist()
+
+                        # get list of all keywords per n topics
+                        all_keywords = [topics[0][no] for no in top_topics]
+                        all_keywords = list(itertools.chain(*all_keywords))
+
+                        # get list of probabilities per n topics
+                        all_probs = [probs[0][c] for c, no in enumerate(top_topics)]
+
+                        #TODO: DELETE THIS LINE AFTER KEY-3SHOT EXPERIMENTS!!
                         top_topic = self.tm.topics_test[0][0]
                         keyword_text = ("Related keywords: " +
-                                    ", ".join([keyword_tuple[0] for keyword_tuple in topics[0][top_topic] ])  + ".\n"
-                        )
-                        # if keyword_tuple[1] > 0.05
-                else:
-                    assert n >= len(topics), "Requested more examples than available topics, please increase no. of closest topics"
-                    top_topics = self.tm.topics_test[0][:n].tolist()
+                                        ", ".join([keyword_tuple[0] for keyword_tuple in topics[0][top_topic] ])  + ".\n"
+                            )
 
-                    # get list of all keywords per n topics
-                    all_keywords = [topics[0][no] for no in top_topics]
-                    all_keywords = list(itertools.chain(*all_keywords))
+                        # UNCOMMENT THIS FOR KEYWORDS30!!!
+                        # keyword_text = (f"Related keywords: " +
+                        #                 ", ".join([keyword for (keyword, p) in all_keywords])  + ".\n"
+                        #     )
 
-                    # get list of probabilities per n topics
-                    all_probs = [probs[0][c] for c, no in enumerate(top_topics)]
 
-                    # keyword_text = (f"This sentence's best {n} predicted topics include keywords such as:" +
-                    #                 ", ".join([keyword_tuple[0] for keyword_tuple, p in zip(all_keywords, all_probs) if p > 0.05])  + ". "
-                    #     )
-                    
-                    keyword_text = (f"Related keywords: " +
-                                    ", ".join([keyword for (keyword, p) in all_keywords])  + ".\n"
-                        )
-                    # if p > 0.05
-
-                fewshotex += keyword_text
+                    fewshotex += keyword_text
             
             if rep_topics:
                 n = num_fewshot
                 no_topics = num_fewshot
-                topics, probs = self.tm.closest_topics(doc["src"], n)
-                rep = self.tm.representative_topics()[0][:num_fewshot]
-                # list of sentences that represent topic
-                if randoms:
-                    rand_topic = random.choice(range(len(self.tm.rep_docs))) - 1
-                    # print(rand_topic)
-                    # print(self.tm.rep_docs)
-                    rep = self.tm.rep_docs[rand_topic][:num_fewshot]
-                    # full_random = 0
-                    # if full_random:
-                    #     pass
-                else:
+                if self.tm:
+                    topics, probs = self.tm.closest_topics(doc["src"], n)
                     rep = self.tm.representative_topics()[0][:num_fewshot]
-                # Representative sentences in the closest topic include:
-                rep_text = (
-                            "\n".join([r for r in rep]) + "\n"
-                )
+                    # list of sentences that represent topic
+                    if randoms:
+                        rand_topic = random.choice(range(len(self.tm.rep_docs))) - 1
+                        # print(rand_topic)
+                        # print(self.tm.rep_docs)
+                        rep = self.tm.rep_docs[rand_topic][:num_fewshot]
+                        # full_random = 0
+                        # if full_random:
+                        #     pass
+                    else:
+                        rep = self.tm.representative_topics()[0][:num_fewshot]
+                    # Representative sentences in the closest topic include:
+                    rep_text = (
+                                "\n".join([r for r in rep]) + "\n"
+                    )
 
-                fewshotex += rep_text
+                    fewshotex += rep_text
+            
+            src_lang = code_to_language(self.language_codes[0])
+            tar_lang = code_to_language(self.language_codes[1])
 
-            if num_fewshot and self.tm and not rep_topics and not topic_keywords:
-                n = num_fewshot
-                topics, probs = self.tm.closest_topics(doc["src"], n)
-                # list of random parallel sentences
-                unrel_top = random.sample(range(0,len(topics)), n)
+            translator = str.maketrans('', '', string.punctuation)
+
+            if num_fewshot and domain_random:
+
+                range_value_pairs = {
+                        (0, 4999): "Czech",
+                        (5000, 9999): "German",
+                        (10000, 14999): "Finnish",
+                        (15000, 19999): "French",
+                        (20000, 24999): "Lithuanian",
+                        (25000, 29999): "Romanian",
+                        (30000, 34999): "Tamil"
+                    }
+
+                if all_langs:
+                    if self.language_codes[0] == "en":
+                        self.train_src_data = self.train_en_data
+                        self.train_trg_data = self.train_x_data
+                    if self.language_codes[1] == "en":
+                        self.train_src_data = self.train_x_data
+                        self.train_trg_data = self.train_en_data
+                    
+                    
+                    if rep_topics:
+                    
+
+                        indices = random.sample(range(len(self.train_src_data)), num_fewshot)
+
+                        assigned_values = assign_values_to_indices(indices, range_value_pairs)
+
+                        if self.language_codes[0] == "en":
+                            selected = [f"{src_lang}: {self.train_src_data[i]} = {assigned_values[c]}: {self.train_trg_data[i]}" for c,i in enumerate(indices)]
+                        if self.language_codes[1] == "en":
+                            selected = [f"{assigned_values[c]}: {self.train_src_data[i]} = {tar_lang}: {self.train_trg_data[i]}" for c,i in enumerate(indices)]
+                        text = ("\n".join([s for s in selected]) + "\n")
+                        fewshotex += text
                 
-                # select top sentence from random topic, for num_fewshot examples
-                rep = [self.tm.representative_topics()[top][0] for top in unrel_top]
+                    if topic_keywords:
+                        src = [sentence.split() for sentence in self.train_src_data]
+                        trg = [sentence.split() for sentence in self.train_trg_data]
+                        flat_src = [word.translate(translator).lower() for sentence_words in src for word in sentence_words]
+                        flat_trg = [word.translate(translator).lower() for sentence_words in trg for word in sentence_words]
+
+                        selected_words = random.sample(flat_src, 5) + random.sample(flat_trg, 5)
+                        random.shuffle(selected_words)
+                        keyword_text = ("Related keywords: " +
+                                    ", ".join([word for word in selected_words])  + ".\n"
+                        )
+                        fewshotex += keyword_text
+
+                else:
+                    assert len(self.train_src_data) == len(self.train_trg_data)
+                    if rep_topics:
+                        indices = random.sample(range(len(self.train_src_data)), num_fewshot)
+                        selected = [f"{src_lang}: {self.train_src_data[i]} = {tar_lang}: {self.train_trg_data[i]}" for i in indices]
+                        text = ("\n".join([s for s in selected]) + "\n")
+                        fewshotex += text
+
+                    if topic_keywords:
+                        src = [sentence.split() for sentence in self.train_src_data]
+                        trg = [sentence.split() for sentence in self.train_trg_data]
+                        flat_src = [word.translate(translator).lower() for sentence_words in src for word in sentence_words]
+                        flat_trg = [word.translate(translator).lower() for sentence_words in trg for word in sentence_words]
+
+                        selected_words = random.sample(flat_src, 5) + random.sample(flat_trg, 5)
+                        random.shuffle(selected_words)
+                        keyword_text = ("Related keywords: " +
+                                    ", ".join([word for word in selected_words])  + ".\n"
+                        )
+                        fewshotex += keyword_text
+
                 
-                rep_text = (
-                            "\n".join([r for r in rep]) + "\n"
-                )
+            if num_fewshot and true_random:
+
+                if all_langs:
+                    
+                    range_value_pairs = {
+                        (0, 39999): "Czech",
+                        (40000, 79999): "German",
+                        (80000, 114999): "Finnish",
+                        (115000, 154999): "French",
+                        (155000, 189999): "Lithuanian",
+                        (190000, 229999): "Romanian",
+                        (230000, 259999): "Tamil"
+                    }
+                    if self.language_codes[0] == "en":
+                        self.train_src_data = self.all_en_data
+                        self.train_trg_data = self.all_x_data
+                    if self.language_codes[1] == "en":
+                        self.train_src_data = self.all_x_data
+                        self.train_trg_data = self.all_en_data
+                    
+                    if rep_topics:
+
+                        indices = random.sample(range(len(self.train_src_data)), num_fewshot)
+
+                        assigned_values = assign_values_to_indices(indices, range_value_pairs)
+
+                        if self.language_codes[0] == "en":
+                            selected = [f"{src_lang}: {self.train_src_data[i]} = {assigned_values[c]}: {self.train_trg_data[i]}" for c,i in enumerate(indices)]
+                        if self.language_codes[1] == "en":
+                            selected = [f"{assigned_values[c]}: {self.train_src_data[i]} = {tar_lang}: {self.train_trg_data[i]}" for c,i in enumerate(indices)]
+                        text = ("\n".join([s for s in selected]) + "\n")
+                        fewshotex += text
+                    
+                    if topic_keywords:
+                        src = [sentence.split() for sentence in self.train_src_data]
+                        trg = [sentence.split() for sentence in self.train_trg_data]
+                        flat_src = [word.translate(translator).lower() for sentence_words in src for word in sentence_words]
+                        flat_trg = [word.translate(translator).lower() for sentence_words in trg for word in sentence_words]
+
+                        selected_words = random.sample(flat_src, 5) + random.sample(flat_trg, 5)
+                        random.shuffle(selected_words)
+                        keyword_text = ("Related keywords: " +
+                                    ", ".join([word for word in selected_words])  + ".\n"
+                        )
+                        fewshotex += keyword_text
+                    
+                else:
+                    assert len(self.alldom_train_x_data) == len(self.alldom_train_en_data)
+                    if self.language_codes[0] == "en":
+                        self.train_src_data = self.alldom_train_en_data
+                        self.train_trg_data = self.alldom_train_x_data
+                    if self.language_codes[1] == "en":
+                        self.train_src_data = self.alldom_train_x_data
+                        self.train_trg_data = self.alldom_train_en_data
+
+                    if rep_topics:
+                        indices = random.sample(range(len(self.train_src_data)), num_fewshot)
+                        selected = [f"{src_lang}: {self.train_src_data[i]} = {tar_lang}: {self.train_trg_data[i]}" for i in indices]
+                        text = ("\n".join([s for s in selected]) + "\n")
+                        fewshotex += text
+
+                    if topic_keywords:
+                        src = [sentence.split() for sentence in self.train_src_data]
+                        trg = [sentence.split() for sentence in self.train_trg_data]
+                        flat_src = [word.translate(translator).lower() for sentence_words in src for word in sentence_words]
+                        flat_trg = [word.translate(translator).lower() for sentence_words in trg for word in sentence_words]
+
+                        selected_words = random.sample(flat_src, 5) + random.sample(flat_trg, 5)
+                        random.shuffle(selected_words)
+                        keyword_text = ("Related keywords: " +
+                                    ", ".join([word for word in selected_words])  + ".\n"
+                        )
+                        fewshotex += keyword_text
+
+
+            # if num_fewshot and self.tm and not rep_topics and not topic_keywords:
+            #     n = num_fewshot
+            #     topics, probs = self.tm.closest_topics(doc["src"], n)
+            #     # list of random parallel sentences
+            #     unrel_top = random.sample(range(0,len(topics)), n)
+                
+            #     # select top sentence from random topic, for num_fewshot examples
+            #     rep = [self.tm.representative_topics()[top][0] for top in unrel_top]
+                
+            #     rep_text = (
+            #                 "\n".join([r for r in rep]) + "\n"
+            #     )
                 
                 # no_topics = num_fewshot
                 # topics, probs = self.tm.closest_topics(doc["src"], n)
@@ -509,3 +720,15 @@ def code_to_language(code):
     # key is alpha_2 or alpha_3 depending on the code length
     language_tuple = pycountry.languages.get(**{f"alpha_{len(code)}": code})
     return language_tuple.name
+
+
+def assign_values_to_indices(indices, range_value_pairs):
+    assigned_values = []
+    for index in indices:
+        assigned_value = None
+        for (start, end), value in range_value_pairs.items():
+            if start <= index <= end:
+                assigned_value = value
+                break
+        assigned_values.append(assigned_value)
+    return assigned_values

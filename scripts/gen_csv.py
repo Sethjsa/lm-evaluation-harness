@@ -10,35 +10,63 @@ def main(args):
     lang_pairs = ["en-cs", "en-de", "en-fi", "en-fr", "en-lt", "en-ro", "en-ta", "cs-en", "fr-en", "lt-en", "ro-en"]
     # lang_pairs = ["cs-en", "fr-en", "lt-en", "ro-en"]
     all_domains = ["EMEA","JRC-Acquis","KDE4","OpenSubtitles","QED","Tanzil","TED2020","CCAligned"]
-    
+        
     modifiers = [
-        # "xglm-base",
-        # "xglm-base-trim",
-        # "verbose-base",
-        # "verbose-base-trim",
-        # "xglm-label",
-        # "xglm-label-trim",
-        # "xglm-rand-label",
-        # "xglm-rand-label-trim",
-        # "xglm-keywords10-seen200",
-        # "xglm-keywords10-seen200-trim",
+        "xglm-base",
+        "xglm-base-trim",
+        "verbose-base",
+        "verbose-base-trim",
+        "xglm-label",
+        "xglm-label-trim",
+        "xglm-rand-label",
+        "xglm-rand-label-trim",
+        "xglm-keywords10-seen200",
+        "xglm-keywords10-seen200-trim",
         "xglm-rand-keywords10-seen200",
         "xglm-rand-keywords10-seen200-trim",
-        # "xglm-keywords10-all500",
-        # "xglm-keywords10-all500-trim",
-        # "xglm-topic3shot-seen200",
-        # "xglm-topic3shot-seen200-trim",
-        # "xglm-topic3shot-all500",
-        # "xglm-topic3shot-all500-trim",
-        # "xglm-topic3shot-cc100",
-        # "xglm-topic3shot-cc100-trim",
-        # "xglm-topic1shot-seen200",
-        # "xglm-topic1shot-seen200-trim",
+        "xglm-keywords10-all500",
+        "xglm-keywords10-all500-trim",
+        "xglm-keywords30-seen200",
+        "xglm-keywords30-seen200-trim",
+        "xglm-topic3shot-seen200",
+        "xglm-topic3shot-seen200-trim",
+        "xglm-topic3shot-all500",
+        "xglm-topic3shot-all500-trim",
+        "xglm-topic3shot-cc100",
+        "xglm-topic3shot-cc100-trim",
+        "xglm-topic1shot-seen200",
+        "xglm-topic1shot-seen200-trim",
         "xglm-rand-topic3shot-seen200",
-        "xglm-rand-topic3shot-seen200-trim"
+        "xglm-rand-topic3shot-seen200-trim",
+        "xglm-rand-domain3shot-langs",
+        "xglm-rand-domain3shot-langs-trim",
+        "xglm-rand-domain3shot-all",
+        "xglm-rand-domain3shot-all-trim",
+        "xglm-truerand-3shot-langs",
+        "xglm-truerand-3shot-langs-trim",
+        "xglm-truerand-3shot-all",
+        "xglm-truerand-3shot-all-trim",
+        "xglm-topic5shot-seen200",
+        "xglm-topic5shot-seen200-trim",
+        "xglm-keywords10-cc100",
+        "xglm-keywords10-cc100-trim",
+        "xglm-keywords10-topic3shot-seen200",
+        "xglm-keywords10-topic3shot-seen200-trim",
+        # "xglm-rand-domainkeywords10-langs",
+        # "xglm-rand-domainkeywords10-langs-trim",
+        # "xglm-rand-domainkeywords10-all",
+        # "xglm-rand-domainkeywords10-all-trim",
+        # "xglm-truerand-keywords10-langs",
+        # "xglm-truerand-keywords10-langs-trim",
+        # "xglm-truerand-keywords10-all",
+        # "xglm-truerand-keywords10-all-trim",
         ]
+
     for modifier in modifiers:
         print(f"{modifier}:")
+
+        domain_sum = {domain: 0 for domain in all_domains}
+        domain_count = {domain: 0 for domain in all_domains}
 
         print("BLEU:")
         with open(f"/scratch/saycock/topic/lm-evaluation-harness/results/alldomains_{modifier}_bleu_results.csv", "w", newline="") as csvfile:
@@ -65,7 +93,9 @@ def main(args):
                             filename = files[0]
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
-                            bleu = round(data[f"{domain}-{lang_pair}"]["bleu"], 6)
+                            bleu = round(data[f"{domain}-{lang_pair}"]["bleu"], 2)
+                            domain_sum[domain] += bleu
+                            domain_count[domain] += 1
                             row.append(bleu)
                             found = 1
                     except (KeyError, IndexError, json.decoder.JSONDecodeError):
@@ -74,8 +104,18 @@ def main(args):
                         row.append("NA")
                 writer.writerow(row)
                 print(row)
+            av_row = ["mean"]
+            for domain in all_domains:
+                av = "NA"
+                if domain_count[domain] > 0:
+                    av = round(domain_sum[domain] / domain_count[domain], 2)
+                av_row.append(av)
+            writer.writerow(av_row)
         
         print("COMET:")
+
+        domain_sum = {domain: 0 for domain in all_domains}
+        domain_count = {domain: 0 for domain in all_domains}
             
         with open(f"/scratch/saycock/topic/lm-evaluation-harness/results/alldomains_{modifier}_comet_results.csv", "w", newline="") as csvfile:
             writer = csv.writer(csvfile, delimiter="\t")
@@ -100,7 +140,9 @@ def main(args):
                             filename = files[0]
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
-                            comet = round(data[f"{domain}-{lang_pair}"]["comet"], 6)
+                            comet = round(data[f"{domain}-{lang_pair}"]["comet"], 4)
+                            domain_sum[domain] += comet
+                            domain_count[domain] += 1
                             row.append(comet)
                             found = 1
                     except (KeyError, IndexError, json.decoder.JSONDecodeError):
@@ -110,6 +152,16 @@ def main(args):
                             
                 writer.writerow(row)
                 print(row)
+            av_row = ["mean"]
+            for domain in all_domains:
+                av = "NA"
+                if domain_count[domain] > 0:
+                    av = round(domain_sum[domain] / domain_count[domain], 4)
+                av_row.append(av)
+            writer.writerow(av_row)
+
+        domain_sum = {domain: 0 for domain in all_domains}
+        domain_count = {domain: 0 for domain in all_domains}
 
         with open(f"/scratch/saycock/topic/lm-evaluation-harness/results/alldomains_{modifier}_langid_results.csv", "w", newline="") as csvfile:
             writer = csv.writer(csvfile, delimiter="\t")
@@ -135,6 +187,8 @@ def main(args):
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
                             comet = data[f"{domain}-{lang_pair}"]["langids"]
+                            domain_sum[domain] += comet
+                            domain_count[domain] += 1
                             row.append(comet)
                             found = 1
                     except (KeyError, IndexError, json.decoder.JSONDecodeError):
@@ -144,7 +198,16 @@ def main(args):
                             
                 writer.writerow(row)
                 print(row)
-
+            av_row = ["mean"]
+            for domain in all_domains:
+                av = "NA"
+                if domain_count[domain] > 0:
+                    av = round(domain_sum[domain] / domain_count[domain], 4)
+                av_row.append(av)
+            writer.writerow(av_row)
+        
+        domain_sum = {domain: 0 for domain in all_domains}
+        domain_count = {domain: 0 for domain in all_domains}
 
         with open(f"/scratch/saycock/topic/lm-evaluation-harness/results/alldomains_{modifier}_length_results.csv", "w", newline="") as csvfile:
             writer = csv.writer(csvfile, delimiter="\t")
@@ -170,6 +233,8 @@ def main(args):
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
                             comet = data[f"{domain}-{lang_pair}"]["av_len"]
+                            domain_sum[domain] += comet
+                            domain_count[domain] += 1
                             row.append(comet)
                             found = 1
                     except (KeyError, IndexError, json.decoder.JSONDecodeError):
@@ -179,6 +244,13 @@ def main(args):
                             
                 writer.writerow(row)
                 print(row)
+            av_row = ["mean"]
+            for domain in all_domains:
+                av = "NA"
+                if domain_count[domain] > 0:
+                    av = round(domain_sum[domain] / domain_count[domain], 4)
+                av_row.append(av)
+            writer.writerow(av_row)
 
 
 if __name__ == '__main__':

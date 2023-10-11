@@ -41,7 +41,10 @@ def simple_evaluate(
     topic_model=None,
     domain_label=False,
     randoms=False,
-    verbose=False
+    verbose=False,
+    domain_random=False,
+    true_random=False,
+    all_langs=False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -144,7 +147,10 @@ def simple_evaluate(
         trim_excess=trim_excess,
         topic_model=topic_model,
         domain_label=domain_label,
-        randoms=randoms
+        randoms=randoms,
+        domain_random=domain_random,
+        all_langs=all_langs,
+        true_random=true_random
     )
 
     # add info about the model and few shot config
@@ -192,7 +198,10 @@ def evaluate(
     parallel_topics=False,
     topic_model=None,
     domain_label=False,
-    randoms=False
+    randoms=False,
+    domain_random=False,
+    all_langs=False,
+    true_random=False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -299,7 +308,7 @@ def evaluate(
             ctx = task.fewshot_context(
                 doc=doc, num_fewshot=num_fewshot, rnd=rnd, description=description,
                 topic_keywords = topic_keywords, rep_topics = rep_topics, no_topics=1, domain_label=domain_label,
-                randoms=randoms
+                randoms=randoms, domain_random=domain_random,  true_random = true_random, all_langs = all_langs
             )
             reqs = task.construct_requests(doc, ctx)
 

@@ -38,8 +38,8 @@ modifiers = [
     # "xglm-base-trim",
     # "verbose-base",
     # "verbose-base-trim",
-    "xglm-label",
-    "xglm-label-trim",
+    # "xglm-label",
+    # "xglm-label-trim",
     # "xglm-rand-label",
     # "xglm-rand-label-trim",
     # "xglm-keywords10-seen200",
@@ -48,6 +48,8 @@ modifiers = [
     # "xglm-rand-keywords10-seen200-trim",
     # "xglm-keywords10-all500",
     # "xglm-keywords10-all500-trim",
+    # "xglm-keywords30-seen200",
+    # "xglm-keywords30-seen200-trim",
     # "xglm-topic3shot-seen200",
     # "xglm-topic3shot-seen200-trim",
     # "xglm-topic3shot-all500",
@@ -57,21 +59,34 @@ modifiers = [
     # "xglm-topic1shot-seen200",
     # "xglm-topic1shot-seen200-trim",
     # "xglm-rand-topic3shot-seen200",
-    # "xglm-rand-topic3shot-seen200-trim"
+    # "xglm-rand-topic3shot-seen200-trim",
+    # "xglm-rand-domain3shot-langs",
+    # "xglm-rand-domain3shot-langs-trim",
+    # "xglm-rand-domain3shot-all",
+    # "xglm-rand-domain3shot-all-trim",
+    # "xglm-truerand-3shot-langs",
+    # "xglm-truerand-3shot-langs-trim",
+    # "xglm-truerand-3shot-all",
+    # "xglm-truerand-3shot-all-trim",
+    "xglm-topic5shot-seen200",
+    "xglm-topic5shot-seen200-trim",
+    "xglm-keywords10-cc100",
+    "xglm-keywords10-cc100-trim",
+    "xglm-keywords10-topic3shot-seen200",
+    "xglm-keywords10-topic3shot-seen200-trim",
     ]
-
 
 def main(args):
     # domain_list = ["OpenSubtitles"]
     # pre_list = ["en-fr", "de-en", "cs-en", "en-fi"]
     ### domain_list
-    # domain_list = ['EMEA', 'Tanzil', 'JRC-Acquis', 'KDE4', 'QED', 'TED2020', 'CCAligned', 'OpenSubtitles']
-    domain_list = ['EMEA', 'JRC-Acquis', 'KDE4', 'QED', 'TED2020', 'CCAligned', 'OpenSubtitles']
+    domain_list = ['EMEA', 'Tanzil', 'JRC-Acquis', 'KDE4', 'QED', 'TED2020', 'CCAligned', 'OpenSubtitles']
+    # domain_list = ['EMEA', 'JRC-Acquis', 'KDE4', 'QED', 'TED2020', 'CCAligned', 'OpenSubtitles']
     # domain_list = ["EMEA"]
     # lang_pairs = ["en-fr"]
     ### pre_list
-    # lang_pairs = ["en-cs", "en-de", "en-fi", "en-fr", "en-lt", "en-ro", "en-ta"]
-    lang_pairs = ["cs-en", "fr-en", "lt-en", "ro-en"]
+    lang_pairs = ["en-cs", "en-de", "en-fi", "en-fr", "en-lt", "en-ro", "en-ta","cs-en", "fr-en", "lt-en", "ro-en"]
+    # lang_pairs = ["cs-en", "fr-en", "lt-en", "ro-en"]
 
 
     # print('Processing file {}'.format(args.input))
