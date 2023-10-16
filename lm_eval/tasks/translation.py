@@ -25,6 +25,7 @@ from lm_eval.topicmodel import TopicModel
 from bertopic import BERTopic
 import random
 os.environ["SACREBLEU"] = "/scratch/saycock/data/"
+from rank_bm25 import BM25Okapi
 
 TOPIC_MODEL = None
 verbose = False
@@ -372,7 +373,8 @@ class GeneralTranslationTask(Task):
     def fewshot_context(
         self, doc, num_fewshot, provide_description=None, rnd=None, description=None,
         topic_keywords = False, rep_topics = False, no_topics=1, domain_label = False,
-        randoms = False, domain_random = False, true_random = False, all_langs = False
+        randoms = False, domain_random = False, true_random = False, all_langs = False,
+        bm25 = False
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -478,6 +480,9 @@ class GeneralTranslationTask(Task):
 
                     fewshotex += keyword_text
             
+            src_lang = code_to_language(self.language_codes[0])
+            tar_lang = code_to_language(self.language_codes[1])
+            
             if rep_topics:
                 n = num_fewshot
                 no_topics = num_fewshot
@@ -496,14 +501,83 @@ class GeneralTranslationTask(Task):
                     else:
                         rep = self.tm.representative_topics()[0][:num_fewshot]
                     # Representative sentences in the closest topic include:
+                    if self.language_codes[1] == "en":
+                        rep = [ " = ".join(r.split(" = ")[::-1]) for r in rep ]
+                    
                     rep_text = (
                                 "\n".join([r for r in rep]) + "\n"
                     )
 
                     fewshotex += rep_text
             
-            src_lang = code_to_language(self.language_codes[0])
-            tar_lang = code_to_language(self.language_codes[1])
+            if bm25:
+
+                range_value_pairs = {
+                        (0, 39999): "Czech",
+                        (40000, 79999): "German",
+                        (80000, 114999): "Finnish",
+                        (115000, 154999): "French",
+                        (155000, 189999): "Lithuanian",
+                        (190000, 229999): "Romanian",
+                        (230000, 259999): "Tamil"
+                    }
+                
+                # ALL DOMAINS, ALL LANGS
+                # self.all_x_data, self.all_en_data
+
+                n = num_fewshot
+                if all_langs:
+                    if self.language_codes[0] == "en":
+                        srcdata = self.all_en_data
+                        trgdata = self.all_x_data
+
+                    if self.language_codes[1] == "en":
+                        srcdata = self.all_x_data
+                        trgdata = self.all_en_data
+                # ONE LANG
+                else:
+                    if self.language_codes[0] == "en":
+                        srcdata = self.alldom_train_en_data
+                        trgdata = self.alldom_train_x_data
+
+                    if self.language_codes[1] == "en":
+                        srcdata = self.alldom_train_x_data
+                        trgdata = self.alldom_train_en_data
+
+                tokenized_corpus = [sent.split(" ") for sent in srcdata]
+                bm = BM25Okapi(tokenized_corpus)
+
+                query = doc["src"].split(" ")
+                results = bm.get_top_n(query, tokenized_corpus, n)
+
+                detok_sents = [" ".join(d) for d in results]
+                
+                indices = [srcdata.index(x) for x in detok_sents]
+                trg_sents = [trgdata[i] for i in indices]
+
+                langs = []
+                for index in indices:
+                    for (start, end), lang in range_value_pairs.items():
+                        if start <= index <= end:
+                            langs.append(lang)
+                            break
+                if all_langs:
+                    if self.language_codes[1] == "en":
+                        examples = [f"{lang}: {detok_sents[c]} = English: {trg_sents[c]}" for c, lang in enumerate(langs)]
+                    if self.language_codes[0] == "en":
+                        examples = [f"English: {detok_sents[c]} = {lang}: {trg_sents[c]}" for c, lang in enumerate(langs)]
+                else:
+                    if self.language_codes[1] == "en":
+                        examples = [f"{src_lang}: {detok_sents[c]} = English: {trg_sents[c]}" for c, i in enumerate(langs)]
+                    if self.language_codes[0] == "en":
+                        examples = [f"English: {detok_sents[c]} = {tar_lang}: {trg_sents[c]}" for c, i in enumerate(langs)]
+
+                rep_text = (
+                                "\n".join([r for r in examples]) + "\n"
+                    )
+
+                fewshotex += rep_text
+                
 
             translator = str.maketrans('', '', string.punctuation)
 

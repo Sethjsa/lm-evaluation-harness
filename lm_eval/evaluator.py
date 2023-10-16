@@ -23,7 +23,7 @@ def simple_evaluate(
     batch_size=None,
     max_batch_size=None,
     device=None,
-    no_cache=False,
+    no_cache=True,
     limit=None,
     bootstrap_iters=100000,
     description_dict=None,
@@ -44,7 +44,8 @@ def simple_evaluate(
     verbose=False,
     domain_random=False,
     true_random=False,
-    all_langs=False
+    all_langs=False,
+    bm25 = False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -150,7 +151,8 @@ def simple_evaluate(
         randoms=randoms,
         domain_random=domain_random,
         all_langs=all_langs,
-        true_random=true_random
+        true_random=true_random,
+        bm25 = bm25
     )
 
     # add info about the model and few shot config
@@ -201,7 +203,8 @@ def evaluate(
     randoms=False,
     domain_random=False,
     all_langs=False,
-    true_random=False
+    true_random=False,
+    bm25 = False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -308,7 +311,8 @@ def evaluate(
             ctx = task.fewshot_context(
                 doc=doc, num_fewshot=num_fewshot, rnd=rnd, description=description,
                 topic_keywords = topic_keywords, rep_topics = rep_topics, no_topics=1, domain_label=domain_label,
-                randoms=randoms, domain_random=domain_random,  true_random = true_random, all_langs = all_langs
+                randoms=randoms, domain_random=domain_random,  true_random = true_random, all_langs = all_langs,
+                bm25 = bm25
             )
             reqs = task.construct_requests(doc, ctx)
 
