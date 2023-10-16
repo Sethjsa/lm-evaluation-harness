@@ -45,6 +45,7 @@ def parse_args():
     parser.add_argument("--domain_random", action="store_true")
     parser.add_argument("--true_random", action="store_true")
     parser.add_argument("--all_langs", action="store_true")
+    parser.add_argument("--bm25", action="store_true")
 
     parser.add_argument("--topic_model", type=str, default=None)
 
@@ -107,7 +108,8 @@ def main():
         verbose=args.verbose,
         domain_random=args.domain_random,
         true_random=args.true_random,
-        all_langs=args.all_langs
+        all_langs=args.all_langs,
+        bm25=args.bm25
     )
 
     dumped = json.dumps(results, indent=2)
