@@ -17,6 +17,7 @@ from lm_eval.utils import remove_excess
 from lm_eval.base import Task, rf
 from typing import List
 import string
+import torch
 
 # EDITS
 import os
@@ -26,9 +27,15 @@ from bertopic import BERTopic
 import random
 os.environ["SACREBLEU"] = "/scratch/saycock/data/"
 from rank_bm25 import BM25Okapi
+from sentence_transformers import SentenceTransformer, util
+model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
 TOPIC_MODEL = None
 verbose = False
+ALL_LANGS = False
+DOMAIN_RANDOM = False
+SENT_SIM = False
+SEEN = False
 
 try:
     import nagisa
@@ -222,37 +229,70 @@ class GeneralTranslationTask(Task):
                 [line.rstrip() for line in sacrebleu.smart_open(file)]
                 for file in (self.train_src_file, self.train_trg_file)
                 ]
+            
+        if SEEN:
+            if ALL_LANGS:
+                self.train_x_seen_file = data_dir + "seen-x.train.x"
+                self.train_en_seen_file = data_dir + "seen-x.train.en"
+
+                self.train_x_seen_data, self.train_en_seen_data = [
+                    [line.rstrip() for line in sacrebleu.smart_open(file)]
+                    for file in (self.train_x_seen_file, self.train_en_seen_file)
+                ]
+            else:
+                if self.language_codes[0] == "en":
+                    self.train_x_seen_file = data_dir + f"seen-{self.language_codes[1]}.train.{self.language_codes[1]}"
+                    self.train_en_seen_file = data_dir + f"seen-{self.language_codes[1]}.train.en"
+                else:
+                    self.train_x_seen_file = data_dir + f"seen-{self.language_codes[0]}.train.{self.language_codes[0]}"
+                    self.train_en_seen_file = data_dir + f"seen-{self.language_codes[0]}.train.en"
+
+                self.train_x_seen_data, self.train_en_seen_data = [
+                    [line.rstrip() for line in sacrebleu.smart_open(file)]
+                    for file in (self.train_x_seen_file, self.train_en_seen_file)
+                ]
+
         
-        # one domain, all langs
-        self.train_x_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + ".train.x"
-        self.train_en_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + ".train.en"
 
-        self.train_x_data, self.train_en_data = [
-            [line.rstrip() for line in sacrebleu.smart_open(file)]
-            for file in (self.train_x_file, self.train_en_file)
-        ]
+        if DOMAIN_RANDOM:
+            # one domain, all langs
+            self.train_x_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + ".train.x"
+            self.train_en_file = data_dir + self.sacrebleu_dataset + "/" + self.sacrebleu_dataset + ".train.en"
 
-        # all domain, one lang pair
-        if self.language_codes[0] == "en":
-            self.alldom_x_file = data_dir + "all-" + self.language_codes[1] + ".train." + self.language_codes[1]
-            self.alldom_en_file = data_dir + "all-" + self.language_codes[1] + ".train.en"
-        if self.language_codes[1] == "en":
-            self.alldom_x_file = data_dir + "all-" + self.language_codes[0] + ".train." + self.language_codes[0]
-            self.alldom_en_file = data_dir + "all-" + self.language_codes[0] + ".train.en"
-        
-        self.alldom_train_x_data, self.alldom_train_en_data = [
-            [line.rstrip() for line in sacrebleu.smart_open(file)]
-            for file in (self.alldom_x_file, self.alldom_en_file)
-        ]
+            self.train_x_data, self.train_en_data = [
+                [line.rstrip() for line in sacrebleu.smart_open(file)]
+                for file in (self.train_x_file, self.train_en_file)
+            ]
 
-        # all domains, all lang pairs (with en)
-        self.all_x_file = data_dir + "all-x.train.x"
-        self.all_en_file = data_dir + "all-en.train.en"
+        if not ALL_LANGS:
+            # all domain, one lang pair
+            if self.language_codes[0] == "en":
+                self.alldom_x_file = data_dir + "all-" + self.language_codes[1] + ".train." + self.language_codes[1]
+                self.alldom_en_file = data_dir + "all-" + self.language_codes[1] + ".train.en"
+            if self.language_codes[1] == "en":
+                self.alldom_x_file = data_dir + "all-" + self.language_codes[0] + ".train." + self.language_codes[0]
+                self.alldom_en_file = data_dir + "all-" + self.language_codes[0] + ".train.en"
+            
+            self.alldom_train_x_data, self.alldom_train_en_data = [
+                [line.rstrip() for line in sacrebleu.smart_open(file)]
+                for file in (self.alldom_x_file, self.alldom_en_file)
+            ]
 
-        self.all_x_data, self.all_en_data = [
-            [line.rstrip() for line in sacrebleu.smart_open(file)]
-            for file in (self.all_x_file, self.all_en_file)
-        ]
+        if ALL_LANGS:
+            # all domains, all lang pairs (with en)
+            self.all_x_file = data_dir + "all-x.train.x"
+            self.all_en_file = data_dir + "all-en.train.en"
+
+            self.all_x_data, self.all_en_data = [
+                [line.rstrip() for line in sacrebleu.smart_open(file)]
+                for file in (self.all_x_file, self.all_en_file)
+            ]
+
+        if SENT_SIM:
+            if ALL_LANGS:
+                self.all_embeddings = model.encode(self.all_x_data, convert_to_tensor=True)
+            else:
+                self.lang_embeddings = model.encode(self.alldom_train_x_data, convert_to_tensor=True)
 
     def has_training_docs(self):
         """Whether the task has a training set"""
@@ -374,7 +414,7 @@ class GeneralTranslationTask(Task):
         self, doc, num_fewshot, provide_description=None, rnd=None, description=None,
         topic_keywords = False, rep_topics = False, no_topics=1, domain_label = False,
         randoms = False, domain_random = False, true_random = False, all_langs = False,
-        bm25 = False
+        bm25 = False, sent_sim = False, seen = False, top_n = False
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -442,12 +482,14 @@ class GeneralTranslationTask(Task):
                         if randoms:
                             # topics_rand, probs_rand = self.tm.closest_topics(doc["src"], len(probs))
                             rand_topic = random.choice(range(len(self.tm.topics_test[0])))
-                            print(len(self.tm.topics_test), len(self.tm.topics_test[0]), len(topics[0]), len(topics))
+                            # print(len(self.tm.topics_test), len(self.tm.topics_test[0]), len(topics[0]), len(topics))
                             # print(rand_topic)
                             # rand_topic = self.tm.topics_test[0][rand_topic]
                             keyword_text = ("Related keywords: " +
                                         ", ".join([keyword_tuple[0] for keyword_tuple in self.tm.topic_model.get_topics()[rand_topic]])  + ".\n"
                             )
+                        
+                            
                         else:
                             # TODO: add probability threshold - for sentence's topic probability, not word's prob of being in topic
                             top_topic = self.tm.topics_test[0][0]
@@ -498,6 +540,11 @@ class GeneralTranslationTask(Task):
                         # full_random = 0
                         # if full_random:
                         #     pass
+                    if top_n:
+                            top_topics = self.tm.topics_test[0][:n].tolist()
+                            rep = [self.tm.rep_docs[x-1][0] for x in top_topics]
+                            # print(top_topics, rep)
+
                     else:
                         rep = self.tm.representative_topics()[0][:num_fewshot]
                     # Representative sentences in the closest topic include:
@@ -527,27 +574,68 @@ class GeneralTranslationTask(Task):
 
                 n = num_fewshot
                 if all_langs:
-                    if self.language_codes[0] == "en":
-                        srcdata = self.all_en_data
-                        trgdata = self.all_x_data
+                    # SEEN DOMAINS ONLY
+                    if seen:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.train_en_seen_data
+                            trgdata = self.train_x_seen_data
 
-                    if self.language_codes[1] == "en":
-                        srcdata = self.all_x_data
-                        trgdata = self.all_en_data
+                        if self.language_codes[1] == "en":
+                            srcdata = self.train_x_seen_data
+                            trgdata = self.train_en_seen_data
+                    
+                    # ALL DOMAINS
+                    else:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.all_en_data
+                            trgdata = self.all_x_data
+
+                        if self.language_codes[1] == "en":
+                            srcdata = self.all_x_data
+                            trgdata = self.all_en_data
+                
+                
                 # ONE LANG
                 else:
-                    if self.language_codes[0] == "en":
-                        srcdata = self.alldom_train_en_data
-                        trgdata = self.alldom_train_x_data
+                    if seen:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.train_en_seen_data
+                            trgdata = self.train_x_seen_data
 
-                    if self.language_codes[1] == "en":
-                        srcdata = self.alldom_train_x_data
-                        trgdata = self.alldom_train_en_data
+                        if self.language_codes[1] == "en":
+                            srcdata = self.train_x_seen_data
+                            trgdata = self.train_en_seen_data
+                    else:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.alldom_train_en_data
+                            trgdata = self.alldom_train_x_data
 
-                tokenized_corpus = [sent.split(" ") for sent in srcdata]
+                        if self.language_codes[1] == "en":
+                            srcdata = self.alldom_train_x_data
+                            trgdata = self.alldom_train_en_data
+
+                # if all_langs:
+                #     if self.language_codes[0] == "en":
+                #         srcdata = self.all_en_data
+                #         trgdata = self.all_x_data
+
+                #     if self.language_codes[1] == "en":
+                #         srcdata = self.all_x_data
+                #         trgdata = self.all_en_data
+                # # ONE LANG
+                # else:
+                #     if self.language_codes[0] == "en":
+                #         srcdata = self.alldom_train_en_data
+                #         trgdata = self.alldom_train_x_data
+
+                #     if self.language_codes[1] == "en":
+                #         srcdata = self.alldom_train_x_data
+                #         trgdata = self.alldom_train_en_data
+
+                tokenized_corpus = [sent.split() for sent in srcdata]
                 bm = BM25Okapi(tokenized_corpus)
 
-                query = doc["src"].split(" ")
+                query = doc["src"].split()
                 results = bm.get_top_n(query, tokenized_corpus, n)
 
                 detok_sents = [" ".join(d) for d in results]
@@ -571,6 +659,107 @@ class GeneralTranslationTask(Task):
                         examples = [f"{src_lang}: {detok_sents[c]} = English: {trg_sents[c]}" for c, i in enumerate(langs)]
                     if self.language_codes[0] == "en":
                         examples = [f"English: {detok_sents[c]} = {tar_lang}: {trg_sents[c]}" for c, i in enumerate(langs)]
+
+                rep_text = (
+                                "\n".join([r for r in examples]) + "\n"
+                    )
+
+                fewshotex += rep_text
+
+            if sent_sim:
+
+                range_value_pairs = {
+                        (0, 39999): "Czech",
+                        (40000, 79999): "German",
+                        (80000, 114999): "Finnish",
+                        (115000, 154999): "French",
+                        (155000, 189999): "Lithuanian",
+                        (190000, 229999): "Romanian",
+                        (230000, 259999): "Tamil"
+                    }
+                
+                # ALL DOMAINS, ALL LANGS
+                # self.all_x_data, self.all_en_data
+
+                n = num_fewshot
+            
+                if all_langs:
+                    embeddings = self.all_embeddings
+
+                    # SEEN DOMAINS ONLY
+                    if seen:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.train_en_seen_data
+                            trgdata = self.train_x_seen_data
+
+                        if self.language_codes[1] == "en":
+                            srcdata = self.train_x_seen_data
+                            trgdata = self.train_en_seen_data
+                    
+                    # ALL DOMAINS
+                    else:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.all_en_data
+                            trgdata = self.all_x_data
+
+                        if self.language_codes[1] == "en":
+                            srcdata = self.all_x_data
+                            trgdata = self.all_en_data
+                
+                
+                # ONE LANG
+                else:
+                    embeddings = self.lang_embeddings
+                    if seen:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.train_en_seen_data
+                            trgdata = self.train_x_seen_data
+
+                        if self.language_codes[1] == "en":
+                            srcdata = self.train_x_seen_data
+                            trgdata = self.train_en_seen_data
+                    else:
+                        if self.language_codes[0] == "en":
+                            srcdata = self.alldom_train_en_data
+                            trgdata = self.alldom_train_x_data
+
+                        if self.language_codes[1] == "en":
+                            srcdata = self.alldom_train_x_data
+                            trgdata = self.alldom_train_en_data
+
+                
+                test_embed = model.encode(doc["src"], convert_to_tensor=True)
+                cosine_scores = util.cos_sim(test_embed, embeddings)
+                scores_array = cosine_scores.cpu().numpy().flatten()
+                top_indices = torch.topk(cosine_scores, n).indices
+                top_sents = [srcdata[i] for i in top_indices[0]]
+
+                # paraphrases = util.paraphrase_mining(model, srcdata)
+
+                # query = doc["src"].split(" ")
+                # results = bm.get_top_n(query, tokenized_corpus, n)
+
+                # detok_sents = [" ".join(d) for d in results]
+                
+                # indices = [srcdata.index(x) for x in detok_sents]
+                trg_sents = [trgdata[i] for i in top_indices[0]]
+
+                langs = []
+                for index in top_indices[0]:
+                    for (start, end), lang in range_value_pairs.items():
+                        if start <= index <= end:
+                            langs.append(lang)
+                            break
+                if all_langs:
+                    if self.language_codes[1] == "en":
+                        examples = [f"{lang}: {top_sents[c]} = English: {trg_sents[c]}" for c, lang in enumerate(langs)]
+                    if self.language_codes[0] == "en":
+                        examples = [f"English: {top_sents[c]} = {lang}: {trg_sents[c]}" for c, lang in enumerate(langs)]
+                else:
+                    if self.language_codes[1] == "en":
+                        examples = [f"{src_lang}: {top_sents[c]} = English: {trg_sents[c]}" for c, i in enumerate(langs)]
+                    if self.language_codes[0] == "en":
+                        examples = [f"English: {top_sents[c]} = {tar_lang}: {trg_sents[c]}" for c, i in enumerate(langs)]
 
                 rep_text = (
                                 "\n".join([r for r in examples]) + "\n"

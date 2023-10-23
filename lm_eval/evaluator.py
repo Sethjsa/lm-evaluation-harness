@@ -45,7 +45,10 @@ def simple_evaluate(
     domain_random=False,
     true_random=False,
     all_langs=False,
-    bm25 = False
+    bm25=False,
+    sent_sim=False,
+    seen=False,
+    top_n=False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -125,6 +128,18 @@ def simple_evaluate(
     if verbose:
         lm_eval.tasks.translation.verbose = verbose
 
+    if all_langs:
+        lm_eval.tasks.translation.ALL_LANGS = all_langs
+
+    if domain_random:
+        lm_eval.tasks.translation.DOMAIN_RANDOM = domain_random
+    
+    if sent_sim:
+        lm_eval.tasks.translation.SENT_SIM = sent_sim
+
+    if seen:
+        lm_eval.tasks.translation.SEEN = seen
+
     task_dict = lm_eval.tasks.get_task_dict(tasks)
 
     if check_integrity:
@@ -152,7 +167,10 @@ def simple_evaluate(
         domain_random=domain_random,
         all_langs=all_langs,
         true_random=true_random,
-        bm25 = bm25
+        bm25=bm25,
+        sent_sim=sent_sim,
+        seen=seen,
+        top_n=top_n
     )
 
     # add info about the model and few shot config
@@ -204,7 +222,10 @@ def evaluate(
     domain_random=False,
     all_langs=False,
     true_random=False,
-    bm25 = False
+    bm25=False,
+    sent_sim=False,
+    seen=False,
+    top_n=False
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -312,7 +333,7 @@ def evaluate(
                 doc=doc, num_fewshot=num_fewshot, rnd=rnd, description=description,
                 topic_keywords = topic_keywords, rep_topics = rep_topics, no_topics=1, domain_label=domain_label,
                 randoms=randoms, domain_random=domain_random,  true_random = true_random, all_langs = all_langs,
-                bm25 = bm25
+                bm25 = bm25, sent_sim = sent_sim, seen = seen, top_n = top_n
             )
             reqs = task.construct_requests(doc, ctx)
 

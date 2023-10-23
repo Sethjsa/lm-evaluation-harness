@@ -14,52 +14,121 @@ def main(args):
     modifiers = [
         "xglm-base",
         "xglm-base-trim",
+
         "verbose-base",
         "verbose-base-trim",
+
         "xglm-label",
         "xglm-label-trim",
+
         "xglm-rand-label",
         "xglm-rand-label-trim",
+
         "xglm-keywords10-seen200",
         "xglm-keywords10-seen200-trim",
+        
         "xglm-rand-keywords10-seen200",
         "xglm-rand-keywords10-seen200-trim",
+
         "xglm-keywords10-all500",
         "xglm-keywords10-all500-trim",
+
         "xglm-keywords30-seen200",
         "xglm-keywords30-seen200-trim",
+
         "xglm-topic3shot-seen200",
         "xglm-topic3shot-seen200-trim",
+
         "xglm-topic3shot-all500",
         "xglm-topic3shot-all500-trim",
+
         "xglm-topic3shot-cc100",
         "xglm-topic3shot-cc100-trim",
+
         "xglm-topic1shot-seen200",
         "xglm-topic1shot-seen200-trim",
+
         "xglm-rand-topic3shot-seen200",
         "xglm-rand-topic3shot-seen200-trim",
+
         "xglm-rand-domain3shot-langs",
         "xglm-rand-domain3shot-langs-trim",
+        
         "xglm-rand-domain3shot-all",
         "xglm-rand-domain3shot-all-trim",
+
         "xglm-truerand-3shot-langs",
         "xglm-truerand-3shot-langs-trim",
+
         "xglm-truerand-3shot-all",
         "xglm-truerand-3shot-all-trim",
+
         "xglm-topic5shot-seen200",
         "xglm-topic5shot-seen200-trim",
+
         "xglm-keywords10-cc100",
         "xglm-keywords10-cc100-trim",
+
         "xglm-keywords10-topic3shot-seen200",
         "xglm-keywords10-topic3shot-seen200-trim",
-        # "xglm-rand-domainkeywords10-langs",
-        # "xglm-rand-domainkeywords10-langs-trim",
-        # "xglm-rand-domainkeywords10-all",
-        # "xglm-rand-domainkeywords10-all-trim",
-        # "xglm-truerand-keywords10-langs",
-        # "xglm-truerand-keywords10-langs-trim",
-        # "xglm-truerand-keywords10-all",
-        # "xglm-truerand-keywords10-all-trim",
+
+        "xglm-rand-domainkeywords10-langs",
+        "xglm-rand-domainkeywords10-langs-trim",
+
+        "xglm-rand-domainkeywords10-all",
+        "xglm-rand-domainkeywords10-all-trim",
+
+        "xglm-truerand-keywords10-langs",
+        "xglm-truerand-keywords10-langs-trim",
+
+        "xglm-truerand-keywords10-all",
+        "xglm-truerand-keywords10-all-trim",
+
+        "xglm-topic3shot-seen500",
+        "xglm-topic3shot-seen500-trim",
+
+        "xglm-topic3shot-seen1000",
+        "xglm-topic3shot-seen1000-trim",
+
+        "xglm-topic3shot-seen2000",
+        "xglm-topic3shot-seen2000-trim",
+
+        "xglm-topic3shot-all500",
+        "xglm-topic3shot-all500-trim",
+
+        "xglm-topic3shot-all1000",
+        "xglm-topic3shot-all1000-trim",
+    
+        "xglm-topic3shot-all2000",
+        "xglm-topic3shot-all2000-trim",
+
+        "xglm-bm25-3shot-all",
+        "xglm-bm25-3shot-all-trim",
+
+        "xglm-bm25-3shot-langs"
+        "xglm-bm25-3shot-langs-trim",
+
+        "xglm-sentsim-3shot-langs",
+        "xglm-sentsim-3shot-langs-trim",
+
+        "xglm-sentsim-3shot-all",
+        "xglm-sentsim-3shot-all-trim",
+
+        "xglm-topic3shot-lang200",
+        "xglm-topic3shot-lang200-trim",
+
+        "xglm-topic3shot-lang500",
+        "xglm-topic3shot-lang500-trim",
+
+        "xglm-topic3shot-domain200",
+        "xglm-topic3shot-domain200-trim",
+
+        "xglm-bm25-3shot-seen-all",
+        "xglm-bm25-3shot-seen-all-trim",
+
+        "xglm-sentsim-3shot-seen-all",
+        "xglm-sentsim-3shot-seen-all-trim",
+
         ]
 
     for modifier in modifiers:
@@ -93,7 +162,7 @@ def main(args):
                             filename = files[0]
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
-                            bleu = round(data[f"{domain}-{lang_pair}"]["bleu"], 2)
+                            bleu = round(data[f"{domain}-{lang_pair}"]["bleu"], 1)
                             domain_sum[domain] += bleu
                             domain_count[domain] += 1
                             row.append(bleu)
@@ -108,7 +177,7 @@ def main(args):
             for domain in all_domains:
                 av = "NA"
                 if domain_count[domain] > 0:
-                    av = round(domain_sum[domain] / domain_count[domain], 2)
+                    av = round(domain_sum[domain] / domain_count[domain], 1)
                 av_row.append(av)
             writer.writerow(av_row)
         
@@ -140,7 +209,7 @@ def main(args):
                             filename = files[0]
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
-                            comet = round(data[f"{domain}-{lang_pair}"]["comet"], 4)
+                            comet = round(data[f"{domain}-{lang_pair}"]["comet"] * 100, 1)
                             domain_sum[domain] += comet
                             domain_count[domain] += 1
                             row.append(comet)
@@ -156,7 +225,7 @@ def main(args):
             for domain in all_domains:
                 av = "NA"
                 if domain_count[domain] > 0:
-                    av = round(domain_sum[domain] / domain_count[domain], 4)
+                    av = round((domain_sum[domain] / domain_count[domain]), 1)
                 av_row.append(av)
             writer.writerow(av_row)
 
@@ -186,7 +255,7 @@ def main(args):
                             filename = files[0]
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
-                            comet = data[f"{domain}-{lang_pair}"]["langids"]
+                            comet = round((data[f"{domain}-{lang_pair}"]["langids"] / 500) * 100, 1)
                             domain_sum[domain] += comet
                             domain_count[domain] += 1
                             row.append(comet)
@@ -202,7 +271,7 @@ def main(args):
             for domain in all_domains:
                 av = "NA"
                 if domain_count[domain] > 0:
-                    av = round(domain_sum[domain] / domain_count[domain], 4)
+                    av = round(domain_sum[domain] / domain_count[domain], 1)
                 av_row.append(av)
             writer.writerow(av_row)
         
@@ -232,7 +301,7 @@ def main(args):
                             filename = files[0]
                         with open(filename, "r") as json_file:
                             data = json.load(json_file)
-                            comet = data[f"{domain}-{lang_pair}"]["av_len"]
+                            comet = round(data[f"{domain}-{lang_pair}"]["av_len"], 1)
                             domain_sum[domain] += comet
                             domain_count[domain] += 1
                             row.append(comet)
@@ -248,7 +317,7 @@ def main(args):
             for domain in all_domains:
                 av = "NA"
                 if domain_count[domain] > 0:
-                    av = round(domain_sum[domain] / domain_count[domain], 4)
+                    av = round(domain_sum[domain] / domain_count[domain], 1)
                 av_row.append(av)
             writer.writerow(av_row)
 
